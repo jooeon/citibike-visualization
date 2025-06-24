@@ -1,4 +1,4 @@
-# Draw with a Spreadsheet: NYC Citi Bike Data Visualization
+# NYC Citi Bike Data Visualization
 
 A creative data visualization project that transforms NYC Citi Bike trip data into an artistic, spatial representation using AI-assisted development.
 
