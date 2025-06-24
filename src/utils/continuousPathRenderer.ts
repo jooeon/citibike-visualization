@@ -236,7 +236,7 @@ export class ContinuousPathRenderer {
       const pathsToRemove = this.persistentPaths.length - this.MAX_PERSISTENT_PATHS;
       this.persistentPaths.splice(0, pathsToRemove);
       
-      console.log(`Removed ${pathsToRemove} oldest paths. Current count: ${this.persistentPaths.length}`);
+      // console.log(`Removed ${pathsToRemove} oldest paths. Current count: ${this.persistentPaths.length}`);
     }
     
     // Draw all persistent paths
