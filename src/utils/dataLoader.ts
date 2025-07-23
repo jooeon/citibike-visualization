@@ -41,12 +41,19 @@ export const loadTripsData = async (filename: string): Promise<DataSet> => {
       throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
     }
     
-    const data: DataSet = await response.json();
+    const rawData: TripData[] = await response.json();
     
-    // Validate data structure
-    if (!data.metadata || !data.trips || !Array.isArray(data.trips)) {
+    // Validate data structure - expecting array of trip objects
+    if (!Array.isArray(rawData)) {
       throw new Error('Invalid data format');
     }
+    
+    // Convert to DataSet format
+    const data: DataSet = {
+      trips: rawData,
+      category: filename.replace('.json', ''),
+      total_trips: rawData.length
+    };
     
     return data;
   } catch (error) {
@@ -77,22 +84,34 @@ export const generateMockData = (category: string): DataSet => {
     const endLat = startLat + Math.cos(angle) * distance;
     const endLng = startLng + Math.sin(angle) * distance;
 
+    // Generate mock time data
+    const now = new Date();
+    const startTime = new Date(now.getTime() + Math.random() * 24 * 60 * 60 * 1000);
+    const duration = 5 + Math.random() * 30; // 5-35 minutes
+    const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
     return {
       id: `MOCK_${category}_${i.toString().padStart(3, '0')}`,
       start: [startLat, startLng] as [number, number],
       end: [endLat, endLng] as [number, number],
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      hour: startTime.getHours(),
+      day: startTime.getDate(),
+      month: startTime.getMonth() + 1,
+      year: startTime.getFullYear(),
+      day_of_week: startTime.getDay(),
+      day_name: startTime.toLocaleDateString('en-US', { weekday: 'long' }),
+      is_weekend: startTime.getDay() === 0 || startTime.getDay() === 6,
+      date: startTime.toISOString().split('T')[0],
+      duration_minutes: duration,
       type: Math.random() > 0.4 ? 'electric_bike' : 'classic_bike' as 'electric_bike' | 'classic_bike',
       member: Math.random() > 0.25
     };
   });
 
   return {
-    metadata: {
-      category,
-      total_trips: mockTrips.length,
-      time_bucket: category.split('_').slice(-1)[0],
-      day_type: category.includes('weekend') ? 'weekend' : 'weekday'
-    },
-    trips: mockTrips
+    trips: mockTrips,
+    category,
+    total_trips: mockTrips.length
   };
 };

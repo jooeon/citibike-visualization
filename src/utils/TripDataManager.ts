@@ -4,7 +4,7 @@ export interface ProcessedTrip extends TripData {
   canvasStart: { x: number; y: number };
   canvasEnd: { x: number; y: number };
   distance: number;
-  duration: number;
+  duration: number; // Animation duration in milliseconds
   startTime: number; // Minutes from midnight when trip actually started
   visualProperties: {
     color: string;
@@ -161,7 +161,15 @@ export class TripDataManager {
   }
 
   // Generate realistic start time for a trip based on its category
-  private generateTripStartTime(category: string, tripIndex: number, totalTrips: number): number {
+  private generateTripStartTime(category: string, tripIndex: number, totalTrips: number, actualStartTime?: string): number {
+    // If we have actual start time from the data, use it
+    if (actualStartTime) {
+      const date = new Date(actualStartTime);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      return hours * 60 + minutes;
+    }
+    
     const config = TIME_PERIOD_CONFIGS[category];
     if (!config) return 480; // Default to 8:00 AM
 
@@ -225,15 +233,20 @@ export class TripDataManager {
       rawTrip.end[0], rawTrip.end[1]
     );
 
-    // Generate realistic start time for this trip
-    const startTime = this.generateTripStartTime(category, tripIndex, totalTrips);
+    // Use actual start time from the data, or generate one
+    const startTime = this.generateTripStartTime(category, tripIndex, totalTrips, rawTrip.start_time);
 
     // Calculate visual properties based on trip characteristics
     const baseColor = rawTrip.type === 'electric_bike' ? '#00ff88' : '#0088ff';
     const memberBoost = rawTrip.member ? 1.2 : 0.8;
     const intensity = config.intensity * memberBoost;
     
-    const duration = Math.max(1500, Math.min(4000, distance * 500)); // 1.5-4 seconds based on distance
+    // Use actual trip duration if available, otherwise calculate based on distance
+    const actualDurationMs = rawTrip.duration_minutes ? rawTrip.duration_minutes * 60 * 1000 : null;
+    const animationDuration = actualDurationMs ? 
+      Math.max(1500, Math.min(8000, actualDurationMs / 10)) : // Scale down actual duration for animation
+      Math.max(1500, Math.min(4000, distance * 500)); // Fallback calculation
+    
     const thickness = rawTrip.type === 'electric_bike' ? 2.5 : 2;
 
     return {
@@ -241,7 +254,7 @@ export class TripDataManager {
       canvasStart,
       canvasEnd,
       distance,
-      duration,
+      duration: animationDuration,
       startTime, // Minutes from midnight when this trip actually started
       visualProperties: {
         color: baseColor,
@@ -267,10 +280,10 @@ export class TripDataManager {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data: DataSet = await response.json();
+      const rawData: TripData[] = await response.json();
       
-      // Validate data structure
-      if (!data.metadata || !data.trips || !Array.isArray(data.trips)) {
+      // Validate data structure - expecting array of trip objects
+      if (!Array.isArray(rawData)) {
         throw new Error('Invalid data format');
       }
 
@@ -278,7 +291,7 @@ export class TripDataManager {
       const validTrips: TripData[] = [];
       let invalidCount = 0;
 
-      for (const trip of data.trips) {
+      for (const trip of rawData) {
         const validation = this.validateTrip(trip);
         if (validation.isValid && validation.cleanedTrip) {
           validTrips.push(validation.cleanedTrip);
@@ -292,12 +305,9 @@ export class TripDataManager {
       }
 
       const cleanedData: DataSet = {
-        ...data,
         trips: validTrips,
-        metadata: {
-          ...data.metadata,
-          total_trips: validTrips.length
-        }
+        category,
+        total_trips: validTrips.length
       };
 
       this.loadedData.set(category, cleanedData);
@@ -418,23 +428,35 @@ export class TripDataManager {
       endLat = Math.max(NYC_BOUNDS.minLat, Math.min(NYC_BOUNDS.maxLat, endLat));
       endLng = Math.max(NYC_BOUNDS.minLng, Math.min(NYC_BOUNDS.maxLng, endLng));
 
+      // Generate mock time data
+      const now = new Date();
+      const startTime = new Date(now.getTime() + Math.random() * 24 * 60 * 60 * 1000);
+      const duration = 5 + Math.random() * 30; // 5-35 minutes
+      const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
       return {
         id: `FALLBACK_${category}_${i.toString().padStart(3, '0')}`,
         start: [startLat, startLng] as [number, number],
         end: [endLat, endLng] as [number, number],
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        hour: startTime.getHours(),
+        day: startTime.getDate(),
+        month: startTime.getMonth() + 1,
+        year: startTime.getFullYear(),
+        day_of_week: startTime.getDay(),
+        day_name: startTime.toLocaleDateString('en-US', { weekday: 'long' }),
+        is_weekend: startTime.getDay() === 0 || startTime.getDay() === 6,
+        date: startTime.toISOString().split('T')[0],
+        duration_minutes: duration,
         type: Math.random() > 0.4 ? 'electric_bike' : 'classic_bike' as 'electric_bike' | 'classic_bike',
         member: Math.random() > 0.25
       };
     });
 
     return {
-      metadata: {
-        category,
-        total_trips: mockTrips.length,
-        time_bucket: category.split('_').slice(-1)[0],
-        day_type: category.includes('weekend') ? 'weekend' : 'weekday'
-      },
-      trips: mockTrips
+      trips: mockTrips,
+      category,
+      total_trips: mockTrips.length
     };
   }
 

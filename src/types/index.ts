@@ -2,18 +2,25 @@ export interface TripData {
   id: string;
   start: [number, number]; // [latitude, longitude]
   end: [number, number];   // [latitude, longitude]
+  start_time: string;
+  end_time: string;
+  hour: number;
+  day: number;
+  month: number;
+  year: number;
+  day_of_week: number;
+  day_name: string;
+  is_weekend: boolean;
+  date: string;
+  duration_minutes: number;
   type: 'electric_bike' | 'classic_bike';
   member: boolean;
 }
 
 export interface DataSet {
-  metadata: {
-    category: string;
-    total_trips: number;
-    time_bucket: string;
-    day_type: string;
-  };
   trips: TripData[];
+  category: string;
+  total_trips: number;
 }
 
 export interface TimePeriod {
