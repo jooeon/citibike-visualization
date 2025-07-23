@@ -7,9 +7,19 @@ export const TIME_PERIODS: TimePeriod[] = [
     filename: 'weekday_morning_rush.json'
   },
   {
+    label: 'Early Morning (Weekday)',
+    value: 'weekday_early_morning',
+    filename: 'weekday_early_morning.json'
+  },
+  {
     label: 'Lunch Time (Weekday)',
-    value: 'weekday_lunch',
-    filename: 'weekday_lunch.json'
+    value: 'weekday_lunch_time',
+    filename: 'weekday_lunch_time.json'
+  },
+  {
+    label: 'Afternoon (Weekday)',
+    value: 'weekday_afternoon',
+    filename: 'weekday_afternoon.json'
   },
   {
     label: 'Evening Rush (Weekday)',
@@ -17,9 +27,29 @@ export const TIME_PERIODS: TimePeriod[] = [
     filename: 'weekday_evening_rush.json'
   },
   {
+    label: 'Night (Weekday)',
+    value: 'weekday_night',
+    filename: 'weekday_night.json'
+  },
+  {
     label: 'Late Night (Weekday)',
     value: 'weekday_late_night',
     filename: 'weekday_late_night.json'
+  },
+  {
+    label: 'Morning Rush (Weekend)',
+    value: 'weekend_morning_rush',
+    filename: 'weekend_morning_rush.json'
+  },
+  {
+    label: 'Early Morning (Weekend)',
+    value: 'weekend_early_morning',
+    filename: 'weekend_early_morning.json'
+  },
+  {
+    label: 'Lunch Time (Weekend)',
+    value: 'weekend_lunch_time',
+    filename: 'weekend_lunch_time.json'
   },
   {
     label: 'Weekend Afternoon',
@@ -27,9 +57,19 @@ export const TIME_PERIODS: TimePeriod[] = [
     filename: 'weekend_afternoon.json'
   },
   {
-    label: 'Weekend Evening',
-    value: 'weekend_evening',
-    filename: 'weekend_evening.json'
+    label: 'Evening Rush (Weekend)',
+    value: 'weekend_evening_rush',
+    filename: 'weekend_evening_rush.json'
+  },
+  {
+    label: 'Night (Weekend)',
+    value: 'weekend_night',
+    filename: 'weekend_night.json'
+  },
+  {
+    label: 'Late Night (Weekend)',
+    value: 'weekend_late_night',
+    filename: 'weekend_late_night.json'
   }
 ];
 

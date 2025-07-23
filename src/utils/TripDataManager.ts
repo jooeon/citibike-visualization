@@ -40,13 +40,29 @@ const TIME_PERIOD_CONFIGS: Record<string, CategoryConfig> = {
     flowDirection: 'inbound',
     timeRange: { start: 420, end: 540, peak: 480 } // 7:00-9:00 AM, peak at 8:00
   },
-  weekday_lunch: {
+  weekday_early_morning: {
+    color: '#6366f1',
+    intensity: 0.3,
+    averageSpeed: 0.8,
+    batchSize: 15,
+    flowDirection: 'scattered',
+    timeRange: { start: 300, end: 420, peak: 360 } // 5:00-7:00 AM, peak at 6:00
+  },
+  weekday_lunch_time: {
     color: '#f59e0b', 
     intensity: 0.6,
     averageSpeed: 0.8,
     batchSize: 40,
     flowDirection: 'scattered',
     timeRange: { start: 720, end: 840, peak: 780 } // 12:00-2:00 PM, peak at 1:00
+  },
+  weekday_afternoon: {
+    color: '#f97316',
+    intensity: 0.5,
+    averageSpeed: 0.7,
+    batchSize: 35,
+    flowDirection: 'scattered',
+    timeRange: { start: 840, end: 1020, peak: 930 } // 2:00-5:00 PM, peak at 3:30
   },
   weekday_evening_rush: {
     color: '#dc2626',
@@ -56,6 +72,14 @@ const TIME_PERIOD_CONFIGS: Record<string, CategoryConfig> = {
     flowDirection: 'outbound',
     timeRange: { start: 1020, end: 1140, peak: 1080 } // 5:00-7:00 PM, peak at 6:00
   },
+  weekday_night: {
+    color: '#8b5cf6',
+    intensity: 0.5,
+    averageSpeed: 0.8,
+    batchSize: 25,
+    flowDirection: 'scattered',
+    timeRange: { start: 1200, end: 1380, peak: 1290 } // 8:00-11:00 PM, peak at 9:30
+  },
   weekday_late_night: {
     color: '#7c3aed',
     intensity: 0.4,
@@ -63,6 +87,30 @@ const TIME_PERIOD_CONFIGS: Record<string, CategoryConfig> = {
     batchSize: 20,
     flowDirection: 'scattered',
     timeRange: { start: 1380, end: 180, peak: 60 } // 11:00 PM - 3:00 AM, peak at 1:00 AM
+  },
+  weekend_morning_rush: {
+    color: '#059669',
+    intensity: 0.6,
+    averageSpeed: 0.8,
+    batchSize: 40,
+    flowDirection: 'recreational',
+    timeRange: { start: 480, end: 600, peak: 540 } // 8:00-10:00 AM, peak at 9:00
+  },
+  weekend_early_morning: {
+    color: '#0d9488',
+    intensity: 0.3,
+    averageSpeed: 0.6,
+    batchSize: 15,
+    flowDirection: 'recreational',
+    timeRange: { start: 360, end: 480, peak: 420 } // 6:00-8:00 AM, peak at 7:00
+  },
+  weekend_lunch_time: {
+    color: '#eab308',
+    intensity: 0.5,
+    averageSpeed: 0.7,
+    batchSize: 35,
+    flowDirection: 'recreational',
+    timeRange: { start: 720, end: 840, peak: 780 } // 12:00-2:00 PM, peak at 1:00
   },
   weekend_afternoon: {
     color: '#10b981',
@@ -72,13 +120,29 @@ const TIME_PERIOD_CONFIGS: Record<string, CategoryConfig> = {
     flowDirection: 'recreational',
     timeRange: { start: 840, end: 960, peak: 900 } // 2:00-4:00 PM, peak at 3:00
   },
-  weekend_evening: {
+  weekend_evening_rush: {
     color: '#f97316',
     intensity: 0.7,
     averageSpeed: 0.8,
     batchSize: 35,
     flowDirection: 'recreational',
     timeRange: { start: 1080, end: 1200, peak: 1140 } // 6:00-8:00 PM, peak at 7:00
+  },
+  weekend_night: {
+    color: '#a855f7',
+    intensity: 0.6,
+    averageSpeed: 0.8,
+    batchSize: 30,
+    flowDirection: 'recreational',
+    timeRange: { start: 1200, end: 1380, peak: 1290 } // 8:00-11:00 PM, peak at 9:30
+  },
+  weekend_late_night: {
+    color: '#9333ea',
+    intensity: 0.4,
+    averageSpeed: 0.7,
+    batchSize: 20,
+    flowDirection: 'recreational',
+    timeRange: { start: 1380, end: 180, peak: 60 } // 11:00 PM - 3:00 AM, peak at 1:00 AM
   }
 };
 
@@ -330,11 +394,19 @@ export class TripDataManager {
   private getCategoryFilename(category: string): string {
     const filenameMap: Record<string, string> = {
       weekday_morning_rush: 'weekday_morning_rush.json',
-      weekday_lunch: 'weekday_lunch.json',
+      weekday_early_morning: 'weekday_early_morning.json',
+      weekday_lunch_time: 'weekday_lunch_time.json',
+      weekday_afternoon: 'weekday_afternoon.json',
       weekday_evening_rush: 'weekday_evening_rush.json',
+      weekday_night: 'weekday_night.json',
       weekday_late_night: 'weekday_late_night.json',
+      weekend_morning_rush: 'weekend_morning_rush.json',
+      weekend_early_morning: 'weekend_early_morning.json',
+      weekend_lunch_time: 'weekend_lunch_time.json',
       weekend_afternoon: 'weekend_afternoon.json',
-      weekend_evening: 'weekend_evening.json'
+      weekend_evening_rush: 'weekend_evening_rush.json',
+      weekend_night: 'weekend_night.json',
+      weekend_late_night: 'weekend_late_night.json'
     };
     
     return filenameMap[category] || 'weekday_morning_rush.json';
