@@ -27,7 +27,7 @@ export interface CategoryConfig {
 const NYC_BOUNDS = {
   minLat: 40.4774,   // Southern tip of Staten Island
   maxLat: 40.9176,   // Northern Bronx
-  minLng: -74.2591,  // Western Staten Island  
+  minLng: -74.2591,  // Western Staten Island
   maxLng: -73.7004   // Eastern Queens/Nassau border
 };
 
@@ -49,7 +49,7 @@ const TIME_PERIOD_CONFIGS: Record<string, CategoryConfig> = {
     timeRange: { start: 300, end: 420, peak: 360 } // 5:00-7:00 AM, peak at 6:00
   },
   weekday_lunch_time: {
-    color: '#f59e0b', 
+    color: '#f59e0b',
     intensity: 0.6,
     averageSpeed: 0.8,
     batchSize: 40,
@@ -169,10 +169,10 @@ export class TripDataManager {
 
   coordsToCanvas(lat: number, lng: number): { x: number; y: number } {
     const padding = 50;
-    const x = ((lng - NYC_BOUNDS.minLng) / (NYC_BOUNDS.maxLng - NYC_BOUNDS.minLng)) 
-              * (this.canvasWidth - 2 * padding) + padding;
-    const y = ((NYC_BOUNDS.maxLat - lat) / (NYC_BOUNDS.maxLat - NYC_BOUNDS.minLat)) 
-              * (this.canvasHeight - 2 * padding) + padding;
+    const x = ((lng - NYC_BOUNDS.minLng) / (NYC_BOUNDS.maxLng - NYC_BOUNDS.minLng))
+        * (this.canvasWidth - 2 * padding) + padding;
+    const y = ((NYC_BOUNDS.maxLat - lat) / (NYC_BOUNDS.maxLat - NYC_BOUNDS.minLat))
+        * (this.canvasHeight - 2 * padding) + padding;
     return { x, y };
   }
 
@@ -187,7 +187,7 @@ export class TripDataManager {
         startLng < (NYC_BOUNDS.minLng - buffer) || startLng > (NYC_BOUNDS.maxLng + buffer) ||
         endLat < (NYC_BOUNDS.minLat - buffer) || endLat > (NYC_BOUNDS.maxLat + buffer) ||
         endLng < (NYC_BOUNDS.minLng - buffer) || endLng > (NYC_BOUNDS.maxLng + buffer)) {
-      
+
       // Log invalid coordinates for debugging
       console.warn('Trip outside NYC bounds:', {
         start: [startLat, startLng],
@@ -218,8 +218,8 @@ export class TripDataManager {
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
@@ -233,17 +233,17 @@ export class TripDataManager {
       const minutes = date.getMinutes();
       return hours * 60 + minutes;
     }
-    
+
     const config = TIME_PERIOD_CONFIGS[category];
     if (!config) return 480; // Default to 8:00 AM
 
     const { start, end, peak } = config.timeRange;
-    
+
     // Handle time ranges that cross midnight (like late night)
     let timeRange: number;
     let adjustedStart = start;
     let adjustedEnd = end;
-    
+
     if (end < start) {
       // Time range crosses midnight
       if (Math.random() > 0.5) {
@@ -261,17 +261,17 @@ export class TripDataManager {
 
     // Create a distribution that peaks at the specified peak time
     let timeOffset: number;
-    
+
     if (peak !== undefined) {
       // Use normal distribution centered on peak
-      const peakPosition = peak >= adjustedStart && peak <= adjustedEnd ? 
-        (peak - adjustedStart) / timeRange : 0.5;
-      
+      const peakPosition = peak >= adjustedStart && peak <= adjustedEnd ?
+          (peak - adjustedStart) / timeRange : 0.5;
+
       // Generate normal distribution using Box-Muller transform
       const u1 = Math.random();
       const u2 = Math.random();
       const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-      
+
       // Scale and center the normal distribution
       const normalizedTime = Math.max(0, Math.min(1, peakPosition + (z0 * 0.15)));
       timeOffset = normalizedTime * timeRange;
@@ -281,20 +281,20 @@ export class TripDataManager {
     }
 
     const startTime = adjustedStart + timeOffset;
-    
+
     // Handle wrap-around for times past midnight
     return startTime % 1440;
   }
 
   processTrip(rawTrip: TripData, category: string, tripIndex: number = 0, totalTrips: number = 1): ProcessedTrip {
     const config = TIME_PERIOD_CONFIGS[category] || TIME_PERIOD_CONFIGS.weekday_morning_rush;
-    
+
     const canvasStart = this.coordsToCanvas(rawTrip.start[0], rawTrip.start[1]);
     const canvasEnd = this.coordsToCanvas(rawTrip.end[0], rawTrip.end[1]);
-    
+
     const distance = this.calculateDistance(
-      rawTrip.start[0], rawTrip.start[1],
-      rawTrip.end[0], rawTrip.end[1]
+        rawTrip.start[0], rawTrip.start[1],
+        rawTrip.end[0], rawTrip.end[1]
     );
 
     // Use actual start time from the data, or generate one
@@ -304,13 +304,13 @@ export class TripDataManager {
     const baseColor = rawTrip.type === 'electric_bike' ? '#00ff88' : '#0088ff';
     const memberBoost = rawTrip.member ? 1.2 : 0.8;
     const intensity = config.intensity * memberBoost;
-    
+
     // Use actual trip duration if available, otherwise calculate based on distance
     const actualDurationMs = rawTrip.duration_minutes ? rawTrip.duration_minutes * 60 * 1000 : null;
-    const animationDuration = actualDurationMs ? 
-      Math.max(1500, Math.min(8000, actualDurationMs / 10)) : // Scale down actual duration for animation
-      Math.max(1500, Math.min(4000, distance * 500)); // Fallback calculation
-    
+    const animationDuration = actualDurationMs ?
+        Math.max(1500, Math.min(8000, actualDurationMs / 10)) : // Scale down actual duration for animation
+        Math.max(1500, Math.min(4000, distance * 500)); // Fallback calculation
+
     const thickness = rawTrip.type === 'electric_bike' ? 2.5 : 2;
 
     return {
@@ -339,13 +339,13 @@ export class TripDataManager {
     try {
       const filename = this.getCategoryFilename(category);
       const response = await fetch(`/data/${filename}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const rawData: TripData[] = await response.json();
-      
+
       // Validate data structure - expecting array of trip objects
       if (!Array.isArray(rawData)) {
         throw new Error('Invalid data format');
@@ -376,7 +376,7 @@ export class TripDataManager {
 
       this.loadedData.set(category, cleanedData);
       this.processTripsForCategory(category, cleanedData);
-      
+
       return cleanedData;
 
     } catch (error) {
@@ -408,22 +408,22 @@ export class TripDataManager {
       weekend_night: 'weekend_night.json',
       weekend_late_night: 'weekend_late_night.json'
     };
-    
+
     return filenameMap[category] || 'weekday_morning_rush.json';
   }
 
   private processTripsForCategory(category: string, data: DataSet): void {
     const totalTrips = data.trips.length;
-    const processedTrips = data.trips.map((trip, index) => 
-      this.processTrip(trip, category, index, totalTrips)
+    const processedTrips = data.trips.map((trip, index) =>
+        this.processTrip(trip, category, index, totalTrips)
     );
-    
+
     // Sort trips by their start time for realistic temporal ordering
     processedTrips.sort((a, b) => {
       // Handle day wrap-around for late night trips
       let aTime = a.startTime;
       let bTime = b.startTime;
-      
+
       // If this is a late night category and times are very different,
       // assume one is before midnight and one is after
       if (category === 'weekday_late_night') {
@@ -432,12 +432,12 @@ export class TripDataManager {
           if (bTime < 360) bTime += 1440;
         }
       }
-      
+
       return aTime - bTime;
     });
-    
+
     this.processedTrips.set(category, processedTrips);
-    
+
     console.log(`Processed ${processedTrips.length} trips for ${category}, sorted by start time`);
     console.log(`Time range: ${Math.min(...processedTrips.map(t => t.startTime)).toFixed(0)} - ${Math.max(...processedTrips.map(t => t.startTime)).toFixed(0)} minutes`);
   }
@@ -459,7 +459,7 @@ export class TripDataManager {
   private generateFallbackData(category: string): DataSet {
     const config = TIME_PERIOD_CONFIGS[category] || TIME_PERIOD_CONFIGS.weekday_morning_rush;
     const tripCount = Math.floor(Math.random() * 200) + 100;
-    
+
     const mockTrips: TripData[] = Array.from({ length: tripCount }, (_, i) => {
       // Generate realistic NYC coordinates within proper bounds
       // Focus on Manhattan, Brooklyn, and Queens for most trips
@@ -473,12 +473,12 @@ export class TripDataManager {
         // Bronx
         { minLat: 40.7855, maxLat: 40.9176, minLng: -73.9339, maxLng: -73.7654, weight: 0.1 }
       ];
-      
+
       // Weighted random area selection
       const rand = Math.random();
       let cumWeight = 0;
       let selectedArea = areas[0];
-      
+
       for (const area of areas) {
         cumWeight += area.weight;
         if (rand <= cumWeight) {
@@ -486,16 +486,16 @@ export class TripDataManager {
           break;
         }
       }
-      
+
       const startLat = selectedArea.minLat + Math.random() * (selectedArea.maxLat - selectedArea.minLat);
       const startLng = selectedArea.minLng + Math.random() * (selectedArea.maxLng - selectedArea.minLng);
-      
+
       // End point within reasonable distance (0.005-0.03 degrees, roughly 0.5-3km)
       const distance = 0.005 + Math.random() * 0.025;
       const angle = Math.random() * 2 * Math.PI;
       let endLat = startLat + Math.cos(angle) * distance;
       let endLng = startLng + Math.sin(angle) * distance;
-      
+
       // Ensure end point is within NYC bounds
       endLat = Math.max(NYC_BOUNDS.minLat, Math.min(NYC_BOUNDS.maxLat, endLat));
       endLng = Math.max(NYC_BOUNDS.minLng, Math.min(NYC_BOUNDS.maxLng, endLng));
@@ -543,8 +543,8 @@ export class TripDataManager {
   preloadCategory(category: string): void {
     // Preload in background without blocking
     setTimeout(() => {
-      this.loadTripData(category).catch(err => 
-        console.warn(`Background preload failed for ${category}:`, err)
+      this.loadTripData(category).catch(err =>
+          console.warn(`Background preload failed for ${category}:`, err)
       );
     }, 100);
   }

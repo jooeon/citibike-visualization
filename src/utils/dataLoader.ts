@@ -76,25 +76,25 @@ export const TIME_PERIODS: TimePeriod[] = [
 export const loadTripsData = async (filename: string): Promise<DataSet> => {
   try {
     const response = await fetch(`/data/${filename}`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
     }
-    
+
     const rawData: TripData[] = await response.json();
-    
+
     // Validate data structure - expecting array of trip objects
     if (!Array.isArray(rawData)) {
       throw new Error('Invalid data format');
     }
-    
+
     // Convert to DataSet format
     const data: DataSet = {
       trips: rawData,
       category: filename.replace('.json', ''),
       total_trips: rawData.length
     };
-    
+
     return data;
   } catch (error) {
     console.error('Error loading trips data:', error);
@@ -112,12 +112,12 @@ export const generateMockData = (category: string): DataSet => {
   };
 
   const tripCount = Math.floor(Math.random() * 300) + 150;
-  
+
   const mockTrips = Array.from({ length: tripCount }, (_, i) => {
     // Generate realistic NYC coordinates
     const startLat = nycBounds.minLat + Math.random() * (nycBounds.maxLat - nycBounds.minLat);
     const startLng = nycBounds.minLng + Math.random() * (nycBounds.maxLng - nycBounds.minLng);
-    
+
     // End point within reasonable distance (0.01 to 0.05 degrees)
     const distance = 0.01 + Math.random() * 0.04;
     const angle = Math.random() * 2 * Math.PI;
