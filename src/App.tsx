@@ -12,6 +12,7 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<string>('07:00');
+  const [currentDate, setCurrentDate] = useState<string>('01/01/2024');
   const [showMap, setShowMap] = useState<boolean>(false);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
@@ -91,6 +92,9 @@ function App() {
     setCurrentTime(time);
   }, []);
 
+  const handleDateUpdate = useCallback((date: string) => {
+    setCurrentDate(date);
+  }, []);
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -99,11 +103,12 @@ function App() {
         animationState={animationState}
         onTripCountUpdate={handleTripCountUpdate}
         onTimeUpdate={handleTimeUpdate}
+        onDateUpdate={handleDateUpdate}
         showMap={showMap}
       />
 
       {/* Digital Clock */}
-      <DigitalClock currentTime={currentTime} />
+      <DigitalClock currentTime={currentTime} currentDate={currentDate} />
 
       {/* Minimal Controls */}
       <MinimalControls

@@ -10,6 +10,7 @@ interface VisualizationCanvasProps {
   animationState: AnimationState;
   onTripCountUpdate?: (count: number) => void;
   onTimeUpdate?: (time: string) => void;
+  onDateUpdate?: (date: string) => void;
   showMap: boolean;
 }
 
@@ -18,6 +19,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   animationState,
   onTripCountUpdate,
   onTimeUpdate,
+  onDateUpdate,
   showMap
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -130,6 +132,21 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   // Process all datasets when they're loaded
   useEffect(() => {
     if (allDataSets.size > 0 && dataManagerRef.current && pathRendererRef.current) {
+      // Extract date from the first available trip for display
+      let sampleDate = '01/01/2024'; // Default fallback
+      for (const [category, dataSet] of allDataSets) {
+        if (dataSet.trips.length > 0 && dataSet.trips[0].date) {
+          const tripDate = new Date(dataSet.trips[0].date);
+          sampleDate = `${(tripDate.getMonth() + 1).toString().padStart(2, '0')}/${tripDate.getDate().toString().padStart(2, '0')}/${tripDate.getFullYear()}`;
+          break;
+        }
+      }
+      
+      // Update the date in the parent component
+      if (onDateUpdate) {
+        onDateUpdate(sampleDate);
+      }
+      
       // Process all trips from all time periods with proper start times
       const allTrips: any[] = [];
       
