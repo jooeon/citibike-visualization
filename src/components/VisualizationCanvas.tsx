@@ -135,11 +135,16 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       // Extract date from the first available trip for display
       let sampleDate = '01/01/2024'; // Default fallback
       for (const [category, dataSet] of allDataSets) {
+        console.log(`Checking category: ${category}, trips count: ${dataSet.trips.length}`);
         if (dataSet.trips.length > 0 && dataSet.trips[0].date) {
+          console.log(`First trip in ${category}:`, dataSet.trips[0]);
+          console.log(`Date field value:`, dataSet.trips[0].date);
           // Parse the date string directly (format: "2025-05-20")
           const dateStr = dataSet.trips[0].date; // e.g., "2025-05-20"
+          console.log(`Using dateStr: ${dateStr} from category: ${category}`);
           const [year, month, day] = dateStr.split('-');
           sampleDate = `${month}/${day}/${year}`;
+          console.log(`Formatted date: ${sampleDate}`);
           break;
         }
       }
