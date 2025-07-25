@@ -136,8 +136,10 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       let sampleDate = '01/01/2024'; // Default fallback
       for (const [category, dataSet] of allDataSets) {
         if (dataSet.trips.length > 0 && dataSet.trips[0].date) {
-          const tripDate = new Date(dataSet.trips[0].date);
-          sampleDate = `${(tripDate.getMonth() + 1).toString().padStart(2, '0')}/${tripDate.getDate().toString().padStart(2, '0')}/${tripDate.getFullYear()}`;
+          // Parse the date string directly (format: "2025-05-20")
+          const dateStr = dataSet.trips[0].date; // e.g., "2025-05-20"
+          const [year, month, day] = dateStr.split('-');
+          sampleDate = `${month}/${day}/${year}`;
           break;
         }
       }
