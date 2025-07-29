@@ -1,18 +1,15 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import MinimalControls from './components/MinimalControls';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
-import { TIME_PERIODS } from './utils/dataLoader';
-import { TripDataManager } from './utils/TripDataManager';
-import type { DataSet, AnimationState } from './types';
+import type { AnimationState } from './types';
 
 function App() {
-  const [allDataSets, setAllDataSets] = useState<Map<string, DataSet>>(new Map());
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState<string>('07:00');
-  const [currentDate, setCurrentDate] = useState<string>('01/01/2024');
+  const [currentTime, setCurrentTime] = useState<string>('00:00');
+  const [currentDate, setCurrentDate] = useState<string>('05/14/2025');
   const [showMap, setShowMap] = useState<boolean>(false);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
@@ -21,37 +18,6 @@ function App() {
     currentTime: 0,
     tripCounter: 0
   });
-
-  const dataManagerRef = useRef<TripDataManager>(new TripDataManager());
-
-  // Load all data sets on startup
-  useEffect(() => {
-    loadAllDataSets();
-  }, []);
-
-  const loadAllDataSets = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const loadedData = new Map<string, DataSet>();
-      
-      for (const period of TIME_PERIODS) {
-        try {
-          const data = await dataManagerRef.current.loadTripData(period.value);
-          loadedData.set(period.value, data);
-        } catch (err) {
-          console.warn(`Failed to load ${period.value}:`, err);
-        }
-      }
-      
-      setAllDataSets(loadedData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handlePlayPause = () => {
     setAnimationState(prev => ({
@@ -67,7 +33,6 @@ function App() {
       isPlaying: false,
       currentTime: 0
     }));
-    setCurrentTime('07:00');
   };
 
   const handleSpeedChange = (speed: number) => {
@@ -95,11 +60,11 @@ function App() {
   const handleDateUpdate = useCallback((date: string) => {
     setCurrentDate(date);
   }, []);
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
       <VisualizationCanvas
-        allDataSets={allDataSets}
         animationState={animationState}
         onTripCountUpdate={handleTripCountUpdate}
         onTimeUpdate={handleTimeUpdate}
@@ -122,7 +87,7 @@ function App() {
       />
 
       {/* Loading Indicator */}
-      <LoadingIndicator isVisible={isLoading} message="Loading 24-hour data..." />
+      <LoadingIndicator isVisible={isLoading} message="Loading chronological trip data..." />
 
       {/* Error Display */}
       {error && (

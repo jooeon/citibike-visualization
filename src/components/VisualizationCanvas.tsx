@@ -1,12 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ContinuousPathRenderer } from '../utils/continuousPathRenderer';
-import { TripDataManager } from '../utils/TripDataManager';
-import type { DataSet, AnimationState } from '../types';
+import { ChronologicalRenderer } from '../utils/ChronologicalRenderer';
+import { ChronologicalDataLoader } from '../utils/dataLoader';
+import type { ProcessedTrip, AnimationState } from '../types';
 
 interface VisualizationCanvasProps {
-  allDataSets: Map<string, DataSet>;
   animationState: AnimationState;
   onTripCountUpdate?: (count: number) => void;
   onTimeUpdate?: (time: string) => void;
@@ -15,7 +14,6 @@ interface VisualizationCanvasProps {
 }
 
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
-  allDataSets,
   animationState,
   onTripCountUpdate,
   onTimeUpdate,
@@ -25,14 +23,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const pathRendererRef = useRef<ContinuousPathRenderer | null>(null);
-  const dataManagerRef = useRef<TripDataManager | null>(null);
+  const rendererRef = useRef<ChronologicalRenderer | null>(null);
+  const dataLoaderRef = useRef<ChronologicalDataLoader | null>(null);
   
   const animationFrameRef = useRef<number>();
-  const tripSchedulerRef = useRef<number>();
-  const timeProgressRef = useRef<number>(420); // Start at 7:00 AM
+  const updateIntervalRef = useRef<number>();
+  const allTripsRef = useRef<ProcessedTrip[]>([]);
 
-  // Initialize map and canvas
+  // Initialize map, canvas, and data loader
   useEffect(() => {
     if (!containerRef.current || !canvasRef.current) return;
 
@@ -58,40 +56,29 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
     mapRef.current = map;
 
-    // Set up canvas to be positioned absolutely within the container
+    // Set up canvas
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
     canvas.style.pointerEvents = 'none';
     canvas.style.zIndex = '400';
 
-    // Set up canvas sizing and positioning
     const resizeCanvas = () => {
       const rect = container.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
       canvas.style.width = rect.width + 'px';
       canvas.style.height = rect.height + 'px';
-      
-      // Update data manager with new dimensions
-      if (dataManagerRef.current) {
-        dataManagerRef.current.setCanvasDimensions(canvas.width, canvas.height);
-      }
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // CRITICAL FIX: Proper canvas positioning to eliminate parallax effect
+    // Handle map events
     const updateCanvasPosition = () => {
-      // The canvas should always stay at 0,0 relative to the container
-      // since we're using latLngToContainerPoint which gives us coordinates
-      // relative to the container, not the map's internal coordinate system
       canvas.style.transform = 'translate(0px, 0px)';
     };
 
-    // Handle map events - but don't transform the canvas position
-    // The coordinate conversion in the renderer handles the positioning
     map.on('move', updateCanvasPosition);
     map.on('zoom', updateCanvasPosition);
     map.on('zoomend', updateCanvasPosition);
@@ -103,24 +90,55 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
     updateCanvasPosition();
 
-    // Initialize components
-    pathRendererRef.current = new ContinuousPathRenderer(canvas, map);
-    dataManagerRef.current = new TripDataManager();
-    dataManagerRef.current.setCanvasDimensions(canvas.width, canvas.height);
+    // Initialize renderer and data loader
+    rendererRef.current = new ChronologicalRenderer(canvas, map);
+    dataLoaderRef.current = new ChronologicalDataLoader();
+
+    // Load data
+    loadChronologicalData();
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      if (tripSchedulerRef.current) {
-        clearInterval(tripSchedulerRef.current);
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
       }
       if (mapRef.current) {
         mapRef.current.remove();
       }
     };
   }, []);
+
+  const loadChronologicalData = async () => {
+    if (!dataLoaderRef.current || !rendererRef.current) return;
+
+    try {
+      console.log('Loading chronological trip data...');
+      const trips = await dataLoaderRef.current.loadAllData();
+      allTripsRef.current = trips;
+      
+      // Set trips in renderer
+      rendererRef.current.setTrips(trips);
+      
+      // Update date display with first trip date
+      if (trips.length > 0 && onDateUpdate) {
+        const firstTripDate = trips[0].startTime;
+        const dateStr = firstTripDate.toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        });
+        onDateUpdate(dateStr);
+      }
+      
+      console.log(`Loaded ${trips.length} chronological trips`);
+      
+    } catch (error) {
+      console.error('Failed to load chronological data:', error);
+    }
+  };
 
   // Toggle map visibility
   useEffect(() => {
@@ -129,151 +147,77 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     }
   }, [showMap]);
 
-  // Process all datasets when they're loaded
+  // Handle animation state changes
   useEffect(() => {
-    if (allDataSets.size > 0 && dataManagerRef.current && pathRendererRef.current) {
-      // Extract date from the first available trip for display
-      let sampleDate = '01/01/2024'; // Default fallback
-      for (const [category, dataSet] of allDataSets) {
-        console.log(`Checking category: ${category}, trips count: ${dataSet.trips.length}`);
-        if (dataSet.trips.length > 0 && dataSet.trips[0].date) {
-          console.log(`First trip in ${category}:`, dataSet.trips[0]);
-          console.log(`Date field value:`, dataSet.trips[0].date);
-          // Parse the date string directly (format: "2025-05-20")
-          const dateStr = dataSet.trips[0].date; // e.g., "2025-05-20"
-          console.log(`Using dateStr: ${dateStr} from category: ${category}`);
-          const [year, month, day] = dateStr.split('-');
-          sampleDate = `${month}/${day}/${year}`;
-          console.log(`Formatted date: ${sampleDate}`);
-          break;
+    if (!rendererRef.current || allTripsRef.current.length === 0) return;
+
+    if (animationState.isPlaying) {
+      // Start simulation
+      rendererRef.current.startSimulation();
+      
+      // Update simulation at regular intervals
+      updateIntervalRef.current = setInterval(() => {
+        if (rendererRef.current) {
+          const { currentSimTime, tripsStarted } = rendererRef.current.updateSimulation(animationState.speed);
+          
+          // Update time display
+          if (onTimeUpdate) {
+            const timeStr = currentSimTime.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            });
+            onTimeUpdate(timeStr);
+          }
+          
+          // Update trip counter
+          if (onTripCountUpdate) {
+            const stats = rendererRef.current.getStats();
+            onTripCountUpdate(stats.currentTripIndex);
+          }
         }
+      }, 100); // Update every 100ms
+      
+    } else {
+      // Pause simulation
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
       }
-      
-      // Update the date in the parent component
-      if (onDateUpdate) {
-        onDateUpdate(sampleDate);
-      }
-      
-      // Process all trips from all time periods with proper start times
-      const allTrips: any[] = [];
-      
-      allDataSets.forEach((dataSet, category) => {
-        const totalTrips = dataSet.trips.length;
-        const processedTrips = dataSet.trips.map((trip, index) => 
-          dataManagerRef.current!.processTrip(trip, category, index, totalTrips)
-        );
-        
-        // Add time information to each trip
-        const tripsWithTime = processedTrips.map(trip => ({
-          ...trip,
-          timeCategory: category,
-          timeSlot: trip.startTime // Use the calculated start time instead of category-based time
-        }));
-        
-        allTrips.push(...tripsWithTime);
-      });
-
-      // Sort ALL trips by their start time across all categories
-      allTrips.sort((a, b) => {
-        let aTime = a.startTime;
-        let bTime = b.startTime;
-        
-        // Handle day wrap-around for late night trips
-        if (a.timeCategory === 'weekday_late_night' && aTime < 360) aTime += 1440;
-        if (b.timeCategory === 'weekday_late_night' && bTime < 360) bTime += 1440;
-        
-        return aTime - bTime;
-      });
-
-      pathRendererRef.current.setAllTrips(allTrips);
-      
-      console.log(`Loaded ${allTrips.length} total trips across all time periods, sorted by start time`);
-      console.log(`Time range: ${Math.min(...allTrips.map(t => t.startTime)).toFixed(0)} - ${Math.max(...allTrips.map(t => t.startTime)).toFixed(0)} minutes`);
-      
-      // Log sample of trip times for verification
-      const sampleTrips = allTrips.slice(0, 10).map(t => ({
-        category: t.timeCategory,
-        startTime: `${Math.floor(t.startTime / 60)}:${(t.startTime % 60).toFixed(0).padStart(2, '0')}`,
-        startTimeMinutes: t.startTime
-      }));
-      console.log('Sample trip start times:', sampleTrips);
     }
-  }, [allDataSets]);
-
-  // Trip scheduling and time progression
-  useEffect(() => {
-    if (!pathRendererRef.current || !animationState.isPlaying || allDataSets.size === 0) {
-      if (tripSchedulerRef.current) {
-        clearInterval(tripSchedulerRef.current);
-      }
-      return;
-    }
-
-    const baseInterval = 80; // Base interval between trips
-    const interval = baseInterval / animationState.speed;
-
-    tripSchedulerRef.current = setInterval(() => {
-      if (pathRendererRef.current) {
-        // Progress time very slowly - 24 hours over approximately 40 minutes real time
-        // This means 1 real minute = 36 virtual minutes
-        const timeProgressSpeed = animationState.speed * 0.6; // 0.6 minutes per interval
-        timeProgressRef.current += timeProgressSpeed;
-        
-        // Wrap around after 24 hours (1440 minutes)
-        if (timeProgressRef.current >= 1440) {
-          timeProgressRef.current = 0;
-        }
-        
-        // Convert progress to time string
-        const hours = Math.floor(timeProgressRef.current / 60);
-        const minutes = Math.floor(timeProgressRef.current % 60);
-        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        
-        if (onTimeUpdate) {
-          onTimeUpdate(timeString);
-        }
-        
-        // Add trip based on current time - now uses actual start times
-        pathRendererRef.current.addTripForCurrentTime(timeProgressRef.current);
-      }
-    }, interval);
 
     return () => {
-      if (tripSchedulerRef.current) {
-        clearInterval(tripSchedulerRef.current);
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
       }
     };
-  }, [animationState.isPlaying, animationState.speed, allDataSets.size, onTimeUpdate]);
+  }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
 
-  // Reset time when animation resets
+  // Handle reset
   useEffect(() => {
-    if (animationState.tripCounter === 0 && !animationState.isPlaying) {
-      timeProgressRef.current = 420; // Start at 7:00 AM
-      if (onTimeUpdate) {
-        onTimeUpdate('07:00');
-      }
-      if (pathRendererRef.current) {
-        pathRendererRef.current.clearAccumulation();
+    if (animationState.tripCounter === 0 && !animationState.isPlaying && rendererRef.current) {
+      rendererRef.current.reset();
+      
+      // Reset time display to first trip time
+      if (allTripsRef.current.length > 0 && onTimeUpdate) {
+        const firstTripTime = allTripsRef.current[0].startTime;
+        const timeStr = firstTripTime.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        onTimeUpdate(timeStr);
       }
     }
   }, [animationState.tripCounter, animationState.isPlaying, onTimeUpdate]);
 
-  // Animation loop
+  // Animation loop for rendering
   useEffect(() => {
-    if (!pathRendererRef.current) return;
+    if (!rendererRef.current) return;
 
     const animate = () => {
-      if (pathRendererRef.current) {
-        const completedTrips = pathRendererRef.current.updateActiveTrips();
-        pathRendererRef.current.render(timeProgressRef.current);
-        
-        // Update trip counter in parent
-        if (onTripCountUpdate) {
-          const stats = pathRendererRef.current.getStats();
-          onTripCountUpdate(stats.totalCompletedTrips + stats.activeTrips);
-        }
+      if (rendererRef.current) {
+        rendererRef.current.render();
       }
-      
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -284,7 +228,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [onTripCountUpdate]);
+  }, []);
 
   return (
     <div className="absolute inset-0 w-full h-full">

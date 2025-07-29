@@ -1,38 +1,28 @@
-export interface TripData {
-  id: string;
-  start: [number, number]; // [latitude, longitude]
-  end: [number, number];   // [latitude, longitude]
-  start_time: string;
-  end_time: string;
-  hour: number;
-  day: number;
-  month: number;
-  year: number;
-  day_of_week: number;
-  day_name: string;
-  is_weekend: boolean;
+export interface RawTripData {
+  st: number;  // start timestamp (Unix)
+  et: number;  // end timestamp (Unix)
+  sl: number;  // start latitude
+  sn: number;  // start longitude
+  el: number;  // end latitude
+  en: number;  // end longitude
+}
+
+export interface DailyDataFile {
   date: string;
-  duration_minutes: number;
-  type: 'electric_bike' | 'classic_bike';
-  member: boolean;
+  count: number;
+  trips: RawTripData[];
 }
 
-export interface DataSet {
-  trips: TripData[];
-  category: string;
-  total_trips: number;
-}
-
-export interface TimePeriod {
-  label: string;
-  value: string;
-  filename: string;
-}
-
-export interface MapInstance {
-  leafletMap: L.Map | null;
-  canvas: HTMLCanvasElement | null;
-  context: CanvasRenderingContext2D | null;
+export interface ProcessedTrip {
+  id: string;
+  startTime: Date;
+  endTime: Date;
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  duration: number; // in milliseconds
+  startTimestamp: number; // Unix timestamp for sorting
 }
 
 export interface AnimationState {
@@ -40,4 +30,10 @@ export interface AnimationState {
   speed: number;
   currentTime: number;
   tripCounter: number;
+}
+
+export interface MapInstance {
+  leafletMap: L.Map | null;
+  canvas: HTMLCanvasElement | null;
+  context: CanvasRenderingContext2D | null;
 }

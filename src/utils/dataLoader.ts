@@ -1,157 +1,227 @@
-import type { DataSet, TimePeriod } from '../types';
+import type { DailyDataFile, ProcessedTrip } from '../types';
 
-export const TIME_PERIODS: TimePeriod[] = [
-  {
-    label: 'Morning Rush (Weekday)',
-    value: 'weekday_morning_rush',
-    filename: 'weekday_morning_rush.json'
-  },
-  {
-    label: 'Early Morning (Weekday)',
-    value: 'weekday_early_morning',
-    filename: 'weekday_early_morning.json'
-  },
-  {
-    label: 'Lunch Time (Weekday)',
-    value: 'weekday_lunch_time',
-    filename: 'weekday_lunch_time.json'
-  },
-  {
-    label: 'Afternoon (Weekday)',
-    value: 'weekday_afternoon',
-    filename: 'weekday_afternoon.json'
-  },
-  {
-    label: 'Evening Rush (Weekday)',
-    value: 'weekday_evening_rush',
-    filename: 'weekday_evening_rush.json'
-  },
-  {
-    label: 'Night (Weekday)',
-    value: 'weekday_night',
-    filename: 'weekday_night.json'
-  },
-  {
-    label: 'Late Night (Weekday)',
-    value: 'weekday_late_night',
-    filename: 'weekday_late_night.json'
-  },
-  {
-    label: 'Morning Rush (Weekend)',
-    value: 'weekend_morning_rush',
-    filename: 'weekend_morning_rush.json'
-  },
-  {
-    label: 'Early Morning (Weekend)',
-    value: 'weekend_early_morning',
-    filename: 'weekend_early_morning.json'
-  },
-  {
-    label: 'Lunch Time (Weekend)',
-    value: 'weekend_lunch_time',
-    filename: 'weekend_lunch_time.json'
-  },
-  {
-    label: 'Weekend Afternoon',
-    value: 'weekend_afternoon',
-    filename: 'weekend_afternoon.json'
-  },
-  {
-    label: 'Evening Rush (Weekend)',
-    value: 'weekend_evening_rush',
-    filename: 'weekend_evening_rush.json'
-  },
-  {
-    label: 'Night (Weekend)',
-    value: 'weekend_night',
-    filename: 'weekend_night.json'
-  },
-  {
-    label: 'Late Night (Weekend)',
-    value: 'weekend_late_night',
-    filename: 'weekend_late_night.json'
+export class ChronologicalDataLoader {
+  private loadedFiles: Map<string, DailyDataFile> = new Map();
+  private allTrips: ProcessedTrip[] = [];
+  private isLoading: boolean = false;
+
+  async loadAllData(): Promise<ProcessedTrip[]> {
+    if (this.isLoading) {
+      return this.allTrips;
+    }
+
+    this.isLoading = true;
+    console.log('Starting to load chronological trip data...');
+
+    try {
+      // Get list of available JSON files
+      const fileNames = await this.getAvailableFiles();
+      console.log(`Found ${fileNames.length} data files:`, fileNames);
+
+      // Load all files
+      const loadPromises = fileNames.map(fileName => this.loadSingleFile(fileName));
+      const results = await Promise.allSettled(loadPromises);
+
+      // Process results
+      let totalTrips = 0;
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          totalTrips += result.value.trips.length;
+          console.log(`Loaded ${result.value.trips.length} trips from ${fileNames[index]}`);
+        } else {
+          console.warn(`Failed to load ${fileNames[index]}:`, result.reason);
+        }
+      });
+
+      // Convert all raw trip data to processed trips
+      this.allTrips = this.processAllTrips();
+      
+      // Sort chronologically by start timestamp
+      this.allTrips.sort((a, b) => a.startTimestamp - b.startTimestamp);
+
+      console.log(`Total processed trips: ${this.allTrips.length}`);
+      console.log(`Date range: ${new Date(this.allTrips[0]?.startTimestamp * 1000).toLocaleDateString()} to ${new Date(this.allTrips[this.allTrips.length - 1]?.startTimestamp * 1000).toLocaleDateString()}`);
+
+      return this.allTrips;
+
+    } catch (error) {
+      console.error('Error loading chronological data:', error);
+      // Return mock data as fallback
+      return this.generateMockData();
+    } finally {
+      this.isLoading = false;
+    }
   }
-];
 
-export const loadTripsData = async (filename: string): Promise<DataSet> => {
-  try {
-    const response = await fetch(`/data/${filename}`);
+  private async getAvailableFiles(): Promise<string[]> {
+    // Try to load files for a date range (you can modify this range as needed)
+    const startDate = new Date('2025-05-14');
+    const endDate = new Date('2025-05-26');
+    const fileNames: string[] = [];
 
-    if (!response.ok) {
-      throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD format
+      fileNames.push(`citibike_${dateStr}.json`);
     }
 
-    const rawData: TripData[] = await response.json();
+    return fileNames;
+  }
 
-    // Validate data structure - expecting array of trip objects
-    if (!Array.isArray(rawData)) {
-      throw new Error('Invalid data format');
+  private async loadSingleFile(fileName: string): Promise<DailyDataFile> {
+    try {
+      const response = await fetch(`/data/${fileName}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: DailyDataFile = await response.json();
+      
+      // Validate data structure
+      if (!data.date || !Array.isArray(data.trips)) {
+        throw new Error('Invalid data format');
+      }
+
+      this.loadedFiles.set(fileName, data);
+      return data;
+
+    } catch (error) {
+      console.warn(`Failed to load ${fileName}:`, error);
+      throw error;
+    }
+  }
+
+  private processAllTrips(): ProcessedTrip[] {
+    const allProcessedTrips: ProcessedTrip[] = [];
+    let tripIdCounter = 0;
+
+    this.loadedFiles.forEach((dailyData, fileName) => {
+      dailyData.trips.forEach((rawTrip) => {
+        // Validate trip data
+        if (!this.isValidTrip(rawTrip)) {
+          return;
+        }
+
+        const processedTrip: ProcessedTrip = {
+          id: `trip_${tripIdCounter++}`,
+          startTime: new Date(rawTrip.st * 1000),
+          endTime: new Date(rawTrip.et * 1000),
+          startLat: rawTrip.sl,
+          startLng: rawTrip.sn,
+          endLat: rawTrip.el,
+          endLng: rawTrip.en,
+          duration: (rawTrip.et - rawTrip.st) * 1000, // Convert to milliseconds
+          startTimestamp: rawTrip.st
+        };
+
+        allProcessedTrips.push(processedTrip);
+      });
+    });
+
+    return allProcessedTrips;
+  }
+
+  private isValidTrip(trip: any): boolean {
+    // Check if all required fields exist and are valid
+    if (typeof trip.st !== 'number' || typeof trip.et !== 'number' ||
+        typeof trip.sl !== 'number' || typeof trip.sn !== 'number' ||
+        typeof trip.el !== 'number' || typeof trip.en !== 'number') {
+      return false;
     }
 
-    // Convert to DataSet format
-    const data: DataSet = {
-      trips: rawData,
-      category: filename.replace('.json', ''),
-      total_trips: rawData.length
+    // Check if coordinates are within reasonable NYC bounds
+    const NYC_BOUNDS = {
+      minLat: 40.4774,
+      maxLat: 40.9176,
+      minLng: -74.2591,
+      maxLng: -73.7004
     };
 
-    return data;
-  } catch (error) {
-    console.error('Error loading trips data:', error);
-    throw error;
+    if (trip.sl < NYC_BOUNDS.minLat || trip.sl > NYC_BOUNDS.maxLat ||
+        trip.sn < NYC_BOUNDS.minLng || trip.sn > NYC_BOUNDS.maxLng ||
+        trip.el < NYC_BOUNDS.minLat || trip.el > NYC_BOUNDS.maxLat ||
+        trip.en < NYC_BOUNDS.minLng || trip.en > NYC_BOUNDS.maxLng) {
+      return false;
+    }
+
+    // Check if timestamps are reasonable
+    if (trip.st >= trip.et || trip.et - trip.st > 7200) { // Max 2 hours
+      return false;
+    }
+
+    return true;
   }
-};
 
-export const generateMockData = (category: string): DataSet => {
-  // NYC bounds for realistic coordinates
-  const nycBounds = {
-    minLat: 40.4774,
-    maxLat: 40.9176,
-    minLng: -74.2591,
-    maxLng: -73.7004
-  };
+  private generateMockData(): ProcessedTrip[] {
+    console.log('Generating mock chronological data...');
+    
+    const mockTrips: ProcessedTrip[] = [];
+    const startDate = new Date('2025-05-14T00:00:00');
+    const endDate = new Date('2025-05-16T23:59:59');
+    
+    // NYC bounds for realistic coordinates
+    const NYC_BOUNDS = {
+      minLat: 40.4774,
+      maxLat: 40.9176,
+      minLng: -74.2591,
+      maxLng: -73.7004
+    };
 
-  const tripCount = Math.floor(Math.random() * 300) + 150;
+    // Generate trips across the date range
+    for (let i = 0; i < 5000; i++) {
+      const randomTime = startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime());
+      const startTime = new Date(randomTime);
+      const duration = (5 + Math.random() * 25) * 60 * 1000; // 5-30 minutes
+      const endTime = new Date(randomTime + duration);
 
-  const mockTrips = Array.from({ length: tripCount }, (_, i) => {
-    // Generate realistic NYC coordinates
-    const startLat = nycBounds.minLat + Math.random() * (nycBounds.maxLat - nycBounds.minLat);
-    const startLng = nycBounds.minLng + Math.random() * (nycBounds.maxLng - nycBounds.minLng);
+      // Generate random NYC coordinates
+      const startLat = NYC_BOUNDS.minLat + Math.random() * (NYC_BOUNDS.maxLat - NYC_BOUNDS.minLat);
+      const startLng = NYC_BOUNDS.minLng + Math.random() * (NYC_BOUNDS.maxLng - NYC_BOUNDS.minLng);
+      
+      // End point within reasonable distance
+      const distance = 0.005 + Math.random() * 0.02;
+      const angle = Math.random() * 2 * Math.PI;
+      const endLat = Math.max(NYC_BOUNDS.minLat, Math.min(NYC_BOUNDS.maxLat, 
+        startLat + Math.cos(angle) * distance));
+      const endLng = Math.max(NYC_BOUNDS.minLng, Math.min(NYC_BOUNDS.maxLng, 
+        startLng + Math.sin(angle) * distance));
 
-    // End point within reasonable distance (0.01 to 0.05 degrees)
-    const distance = 0.01 + Math.random() * 0.04;
-    const angle = Math.random() * 2 * Math.PI;
-    const endLat = startLat + Math.cos(angle) * distance;
-    const endLng = startLng + Math.sin(angle) * distance;
+      mockTrips.push({
+        id: `mock_trip_${i}`,
+        startTime,
+        endTime,
+        startLat,
+        startLng,
+        endLat,
+        endLng,
+        duration,
+        startTimestamp: Math.floor(startTime.getTime() / 1000)
+      });
+    }
 
-    // Generate mock time data
-    const now = new Date();
-    const startTime = new Date(now.getTime() + Math.random() * 24 * 60 * 60 * 1000);
-    const duration = 5 + Math.random() * 30; // 5-35 minutes
-    const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+    // Sort chronologically
+    mockTrips.sort((a, b) => a.startTimestamp - b.startTimestamp);
+    
+    console.log(`Generated ${mockTrips.length} mock trips`);
+    return mockTrips;
+  }
+
+  getAllTrips(): ProcessedTrip[] {
+    return this.allTrips;
+  }
+
+  getLoadingState(): boolean {
+    return this.isLoading;
+  }
+
+  getDateRange(): { start: Date | null, end: Date | null } {
+    if (this.allTrips.length === 0) {
+      return { start: null, end: null };
+    }
+
     return {
-      id: `MOCK_${category}_${i.toString().padStart(3, '0')}`,
-      start: [startLat, startLng] as [number, number],
-      end: [endLat, endLng] as [number, number],
-      start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(),
-      hour: startTime.getHours(),
-      day: startTime.getDate(),
-      month: startTime.getMonth() + 1,
-      year: startTime.getFullYear(),
-      day_of_week: startTime.getDay(),
-      day_name: startTime.toLocaleDateString('en-US', { weekday: 'long' }),
-      is_weekend: startTime.getDay() === 0 || startTime.getDay() === 6,
-      date: startTime.toISOString().split('T')[0],
-      duration_minutes: duration,
-      type: Math.random() > 0.4 ? 'electric_bike' : 'classic_bike' as 'electric_bike' | 'classic_bike',
-      member: Math.random() > 0.25
+      start: new Date(this.allTrips[0].startTimestamp * 1000),
+      end: new Date(this.allTrips[this.allTrips.length - 1].startTimestamp * 1000)
     };
-  });
-
-  return {
-    trips: mockTrips,
-    category,
-    total_trips: mockTrips.length
-  };
-};
+  }
+}
