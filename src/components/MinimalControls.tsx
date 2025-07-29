@@ -73,9 +73,9 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
         </div>
 
         {/* Trip Counter */}
-        {animationState.tripCounter > 0 && (
+        {(animationState.tripCounter > 0 || animationState.totalTrips > 0) && (
           <div className="text-white/60 text-xs text-center">
-            {animationState.tripCounter} trips
+            {animationState.tripCounter}/{animationState.totalTrips} trips
           </div>
         )}
       </div>

@@ -26,7 +26,8 @@ export class ChronologicalRenderer {
   private completedPaths: CompletedPath[] = [];
   private currentTripIndex: number = 0;
   private simulationStartTime: number = 0;
-  private timeScale: number = 1000; // 1000x speed (1 real second = 1000 simulation seconds)
+  private timeScale: number = 500; // 500x speed (1 real second = 500 simulation seconds) - reduced by 50%
+  private readonly MAX_DISPLAYED_TRIPS = 500; // Hard cap on displayed trips
 
   constructor(canvas: HTMLCanvasElement, map?: L.Map) {
     this.canvas = canvas;
@@ -122,6 +123,11 @@ export class ChronologicalRenderer {
           thickness: 2,
           completedAt: currentTime
         });
+        
+        // Enforce FIFO cap on completed paths
+        if (this.completedPaths.length > this.MAX_DISPLAYED_TRIPS) {
+          this.completedPaths.shift(); // Remove oldest completed path
+        }
         
         return false; // Remove from active trips
       }
@@ -266,6 +272,7 @@ export class ChronologicalRenderer {
       currentTripIndex: this.currentTripIndex,
       activeTrips: this.activeTrips.length,
       completedPaths: this.completedPaths.length,
+      displayedTrips: this.activeTrips.length + this.completedPaths.length,
       progress: this.allTrips.length > 0 ? this.currentTripIndex / this.allTrips.length : 0
     };
   }

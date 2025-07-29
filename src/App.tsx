@@ -16,7 +16,8 @@ function App() {
     isPlaying: false,
     speed: 1.0,
     currentTime: 0,
-    tripCounter: 0
+    tripCounter: 0,
+    totalTrips: 0
   });
 
   const handlePlayPause = () => {
@@ -53,6 +54,13 @@ function App() {
     }));
   }, []);
 
+  const handleTotalTripsUpdate = useCallback((total: number) => {
+    setAnimationState(prev => ({
+      ...prev,
+      totalTrips: total
+    }));
+  }, []);
+
   const handleTimeUpdate = useCallback((time: string) => {
     setCurrentTime(time);
   }, []);
@@ -67,6 +75,7 @@ function App() {
       <VisualizationCanvas
         animationState={animationState}
         onTripCountUpdate={handleTripCountUpdate}
+        onTotalTripsUpdate={handleTotalTripsUpdate}
         onTimeUpdate={handleTimeUpdate}
         onDateUpdate={handleDateUpdate}
         showMap={showMap}

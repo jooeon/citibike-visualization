@@ -30,6 +30,7 @@ export interface AnimationState {
   speed: number;
   currentTime: number;
   tripCounter: number;
+  totalTrips: number;
 }
 
 export interface MapInstance {

@@ -8,6 +8,7 @@ import type { ProcessedTrip, AnimationState } from '../types';
 interface VisualizationCanvasProps {
   animationState: AnimationState;
   onTripCountUpdate?: (count: number) => void;
+  onTotalTripsUpdate?: (total: number) => void;
   onTimeUpdate?: (time: string) => void;
   onDateUpdate?: (date: string) => void;
   showMap: boolean;
@@ -16,6 +17,7 @@ interface VisualizationCanvasProps {
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   animationState,
   onTripCountUpdate,
+  onTotalTripsUpdate,
   onTimeUpdate,
   onDateUpdate,
   showMap
@@ -122,6 +124,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       // Set trips in renderer
       rendererRef.current.setTrips(trips);
       
+      // Update total trips count
+      if (onTotalTripsUpdate) {
+        onTotalTripsUpdate(trips.length);
+      }
+      
       // Update date display with first trip date
       if (trips.length > 0 && onDateUpdate) {
         const firstTripDate = trips[0].startTime;
@@ -173,7 +180,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           // Update trip counter
           if (onTripCountUpdate) {
             const stats = rendererRef.current.getStats();
-            onTripCountUpdate(stats.currentTripIndex);
+            onTripCountUpdate(stats.displayedTrips);
           }
         }
       }, 100); // Update every 100ms
