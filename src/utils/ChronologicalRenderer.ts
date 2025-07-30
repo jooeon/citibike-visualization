@@ -137,15 +137,43 @@ export class ChronologicalRenderer {
   }
 
   private getTripColor(trip: ProcessedTrip): string {
-    // Color based on time of day
+    // Gradient color based on time of day
     const hour = trip.startTime.getHours();
+    const minute = trip.startTime.getMinutes();
+    const timeDecimal = hour + minute / 60; // Convert to decimal hours (e.g., 6.5 for 6:30)
     
-    if (hour >= 6 && hour < 10) return '#4f46e5'; // Morning rush - blue
-    if (hour >= 10 && hour < 16) return '#f59e0b'; // Midday - amber
-    if (hour >= 16 && hour < 20) return '#dc2626'; // Evening rush - red
-    if (hour >= 20 || hour < 6) return '#8b5cf6'; // Night - purple
+    // Define color stops for 24-hour cycle
+    const colorStops = [
+      { time: 0, color: [139, 92, 246] },   // Night - purple (00:00)
+      { time: 6, color: [139, 92, 246] },   // Night - purple (06:00)
+      { time: 10, color: [79, 70, 229] },   // Morning rush - blue (10:00)
+      { time: 16, color: [245, 158, 11] },  // Midday - amber (16:00)
+      { time: 20, color: [220, 38, 38] },   // Evening rush - red (20:00)
+      { time: 24, color: [139, 92, 246] }   // Night - purple (24:00)
+    ];
     
-    return '#6b7280'; // Default gray
+    // Find the two color stops to interpolate between
+    let startStop = colorStops[0];
+    let endStop = colorStops[colorStops.length - 1];
+    
+    for (let i = 0; i < colorStops.length - 1; i++) {
+      if (timeDecimal >= colorStops[i].time && timeDecimal <= colorStops[i + 1].time) {
+        startStop = colorStops[i];
+        endStop = colorStops[i + 1];
+        break;
+      }
+    }
+    
+    // Calculate interpolation factor
+    const timeDiff = endStop.time - startStop.time;
+    const factor = timeDiff === 0 ? 0 : (timeDecimal - startStop.time) / timeDiff;
+    
+    // Interpolate RGB values
+    const r = Math.round(startStop.color[0] + (endStop.color[0] - startStop.color[0]) * factor);
+    const g = Math.round(startStop.color[1] + (endStop.color[1] - startStop.color[1]) * factor);
+    const b = Math.round(startStop.color[2] + (endStop.color[2] - startStop.color[2]) * factor);
+    
+    return `rgb(${r}, ${g}, ${b})`;
   }
 
   private coordsToCanvas(lat: number, lng: number): { x: number; y: number } {
@@ -156,10 +184,10 @@ export class ChronologicalRenderer {
     
     // Fallback coordinate transformation
     const NYC_BOUNDS = {
-      minLat: 40.4774,
-      maxLat: 40.9176,
-      minLng: -74.2591,
-      maxLng: -73.7004
+      minLat: 40.6892,  // Southern Brooklyn
+      maxLat: 40.8820,  // Northern Bronx
+      minLng: -74.0259, // Western Manhattan/Jersey City
+      maxLng: -73.7004  // Eastern Queens
     };
     
     const padding = 50;
