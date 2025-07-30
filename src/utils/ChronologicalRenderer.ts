@@ -26,8 +26,10 @@ export class ChronologicalRenderer {
   private completedPaths: CompletedPath[] = [];
   private currentTripIndex: number = 0;
   private simulationStartTime: number = 0;
+  private simulationTimeOffset: number = 0; // Track accumulated simulation time
   private timeScale: number = 500; // 500x speed (1 real second = 500 simulation seconds) - reduced by 50%
   private readonly MAX_DISPLAYED_TRIPS = 500; // Hard cap on displayed trips
+  private totalTripsStarted: number = 0; // Monotonically increasing counter
 
   constructor(canvas: HTMLCanvasElement, map?: L.Map) {
     this.canvas = canvas;
@@ -52,10 +54,18 @@ export class ChronologicalRenderer {
   }
 
   startSimulation(): void {
-    this.simulationStartTime = Date.now();
-    this.currentTripIndex = 0;
-    this.activeTrips = [];
-    this.completedPaths = [];
+    // Only reset if this is a true restart (not a speed change)
+    if (this.simulationStartTime === 0) {
+      this.simulationStartTime = Date.now();
+      this.currentTripIndex = 0;
+      this.activeTrips = [];
+      this.completedPaths = [];
+      this.simulationTimeOffset = 0;
+      this.totalTripsStarted = 0;
+    } else {
+      // Speed change: preserve current state but update timing reference
+      this.simulationStartTime = Date.now();
+    }
     
     console.log('Starting chronological simulation');
   }
@@ -66,7 +76,7 @@ export class ChronologicalRenderer {
     }
 
     const realTimeElapsed = Date.now() - this.simulationStartTime;
-    const simulationTimeElapsed = realTimeElapsed * this.timeScale * speed;
+    const simulationTimeElapsed = this.simulationTimeOffset + (realTimeElapsed * this.timeScale * speed);
     
     // Calculate current simulation time
     const firstTripTime = this.allTrips[0].startTimestamp * 1000;
@@ -81,6 +91,7 @@ export class ChronologicalRenderer {
       if (tripStartTime <= currentSimTime.getTime()) {
         this.startTrip(trip);
         this.currentTripIndex++;
+        this.totalTripsStarted++;
         tripsStarted++;
       } else {
         break;
@@ -91,6 +102,14 @@ export class ChronologicalRenderer {
     this.updateActiveTrips();
 
     return { currentSimTime, tripsStarted };
+  }
+
+  updateSimulationTimeOffset(speed: number): void {
+    // Called before speed changes to preserve timeline position
+    if (this.simulationStartTime > 0) {
+      const realTimeElapsed = Date.now() - this.simulationStartTime;
+      this.simulationTimeOffset += realTimeElapsed * this.timeScale * speed;
+    }
   }
 
   private startTrip(trip: ProcessedTrip): void {
@@ -292,12 +311,15 @@ export class ChronologicalRenderer {
     this.activeTrips = [];
     this.completedPaths = [];
     this.simulationStartTime = 0;
+    this.simulationTimeOffset = 0;
+    this.totalTripsStarted = 0;
   }
 
   getStats() {
     return {
       totalTrips: this.allTrips.length,
       currentTripIndex: this.currentTripIndex,
+      totalTripsStarted: this.totalTripsStarted,
       activeTrips: this.activeTrips.length,
       completedPaths: this.completedPaths.length,
       displayedTrips: this.activeTrips.length + this.completedPaths.length,

@@ -188,7 +188,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           // Update trip counter
           if (onTripCountUpdate) {
             const stats = rendererRef.current.getStats();
-            onTripCountUpdate(stats.displayedTrips);
+            onTripCountUpdate(stats.totalTripsStarted);
           }
         }
       }, 100); // Update every 100ms
@@ -206,6 +206,16 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
     };
   }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
+
+  // Handle speed changes while preserving timeline position
+  const previousSpeedRef = useRef<number>(animationState.speed);
+  useEffect(() => {
+    if (rendererRef.current && previousSpeedRef.current !== animationState.speed) {
+      // Preserve timeline position when speed changes
+      rendererRef.current.updateSimulationTimeOffset(previousSpeedRef.current);
+      previousSpeedRef.current = animationState.speed;
+    }
+  }, [animationState.speed]);
 
   // Handle reset
   useEffect(() => {
