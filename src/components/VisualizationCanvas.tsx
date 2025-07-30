@@ -131,12 +131,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       // Update date display with first trip date
       if (trips.length > 0 && onDateUpdate) {
-        const firstTripDate = trips[0].startTime;
-        const dateStr = firstTripDate.toLocaleDateString('en-US', {
-          month: '2-digit',
-          day: '2-digit',
-          year: 'numeric'
-        });
+        const firstTripDate = new Date(trips[0].startTimestamp * 1000);
+        const month = String(firstTripDate.getMonth() + 1).padStart(2, '0');
+        const day = String(firstTripDate.getDate()).padStart(2, '0');
+        const year = firstTripDate.getFullYear();
+        const dateStr = `${month}/${day}/${year}`;
         onDateUpdate(dateStr);
       }
       
@@ -167,6 +166,15 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         if (rendererRef.current) {
           const { currentSimTime, tripsStarted } = rendererRef.current.updateSimulation(animationState.speed);
           
+          // Update date display when day changes
+          if (onDateUpdate && allTripsRef.current.length > 0) {
+            const month = String(currentSimTime.getMonth() + 1).padStart(2, '0');
+            const day = String(currentSimTime.getDate()).padStart(2, '0');
+            const year = currentSimTime.getFullYear();
+            const dateStr = `${month}/${day}/${year}`;
+            onDateUpdate(dateStr);
+          }
+          
           // Update time display
           if (onTimeUpdate) {
             const timeStr = currentSimTime.toLocaleTimeString('en-US', {
@@ -180,7 +188,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           // Update trip counter
           if (onTripCountUpdate) {
             const stats = rendererRef.current.getStats();
-            onTripCountUpdate(stats.displayedTrips);
+            onTripCountUpdate(stats.totalTripsStarted);
           }
         }
       }, 100); // Update every 100ms
@@ -198,6 +206,16 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
     };
   }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
+
+  // Handle speed changes while preserving timeline position
+  const previousSpeedRef = useRef<number>(animationState.speed);
+  useEffect(() => {
+    if (rendererRef.current && previousSpeedRef.current !== animationState.speed) {
+      // Preserve timeline position when speed changes
+      rendererRef.current.updateSimulationTimeOffset(previousSpeedRef.current);
+      previousSpeedRef.current = animationState.speed;
+    }
+  }, [animationState.speed]);
 
   // Handle reset
   useEffect(() => {

@@ -131,10 +131,10 @@ export class ChronologicalDataLoader {
 
     // Check if coordinates are within reasonable NYC bounds
     const NYC_BOUNDS = {
-      minLat: 40.4774,
-      maxLat: 40.9176,
-      minLng: -74.2591,
-      maxLng: -73.7004
+      minLat: 40.6892,  // Southern Brooklyn
+      maxLat: 40.8820,  // Northern Bronx  
+      minLng: -74.0259, // Western Manhattan/Jersey City
+      maxLng: -73.7004  // Eastern Queens
     };
 
     if (trip.sl < NYC_BOUNDS.minLat || trip.sl > NYC_BOUNDS.maxLat ||
@@ -161,10 +161,10 @@ export class ChronologicalDataLoader {
     
     // NYC bounds for realistic coordinates
     const NYC_BOUNDS = {
-      minLat: 40.4774,
-      maxLat: 40.9176,
-      minLng: -74.2591,
-      maxLng: -73.7004
+      minLat: 40.6892,  // Southern Brooklyn
+      maxLat: 40.8820,  // Northern Bronx
+      minLng: -74.0259, // Western Manhattan/Jersey City
+      maxLng: -73.7004  // Eastern Queens
     };
 
     // Generate trips across the date range
