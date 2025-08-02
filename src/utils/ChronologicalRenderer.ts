@@ -30,6 +30,9 @@ export class ChronologicalRenderer {
   private timeScale: number = 500; // 500x speed (1 real second = 500 simulation seconds) - reduced by 50%
   private readonly MAX_DISPLAYED_TRIPS = 500; // Hard cap on displayed trips
   private totalTripsStarted: number = 0; // Monotonically increasing counter
+  private isPaused: boolean = false;
+  private pauseStartTime: number = 0;
+  private accumulatedPauseTime: number = 0;
 
   constructor(canvas: HTMLCanvasElement, map?: L.Map) {
     this.canvas = canvas;
@@ -62,6 +65,9 @@ export class ChronologicalRenderer {
       this.completedPaths = [];
       this.simulationTimeOffset = 0;
       this.totalTripsStarted = 0;
+      this.isPaused = false;
+      this.pauseStartTime = 0;
+      this.accumulatedPauseTime = 0;
     } else {
       // Speed change: preserve current state but update timing reference
       this.simulationStartTime = Date.now();
@@ -117,19 +123,25 @@ export class ChronologicalRenderer {
     // Scale it down for visual appeal (e.g., 30-minute trip becomes 3-second animation)
     const animationDuration = Math.max(1000, Math.min(5000, trip.duration / 10));
 
+    const currentTime = Date.now();
     this.activeTrips.push({
       trip,
-      startTime: Date.now(),
+      startTime: currentTime,
       progress: 0,
       animationDuration
     });
   }
 
   private updateActiveTrips(): void {
+    if (this.isPaused) {
+      return; // Don't update trip progress when paused
+    }
+
     const currentTime = Date.now();
     
     this.activeTrips = this.activeTrips.filter(activeTrip => {
-      const elapsed = currentTime - activeTrip.startTime;
+      // Subtract accumulated pause time from elapsed time calculation
+      const elapsed = currentTime - activeTrip.startTime - this.accumulatedPauseTime;
       activeTrip.progress = Math.min(1, elapsed / activeTrip.animationDuration);
       
       if (activeTrip.progress >= 1) {
@@ -313,8 +325,30 @@ export class ChronologicalRenderer {
     this.simulationStartTime = 0;
     this.simulationTimeOffset = 0;
     this.totalTripsStarted = 0;
+    this.isPaused = false;
+    this.pauseStartTime = 0;
+    this.accumulatedPauseTime = 0;
   }
 
+  pause(): void {
+    if (!this.isPaused) {
+      this.isPaused = true;
+      this.pauseStartTime = Date.now();
+    }
+  }
+
+  resume(): void {
+    if (this.isPaused) {
+      this.isPaused = false;
+      // Add the pause duration to accumulated pause time
+      this.accumulatedPauseTime += Date.now() - this.pauseStartTime;
+      this.pauseStartTime = 0;
+    }
+  }
+
+  getIsPaused(): boolean {
+    return this.isPaused;
+  }
   getStats() {
     return {
       totalTrips: this.allTrips.length,

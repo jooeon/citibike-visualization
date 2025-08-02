@@ -158,8 +158,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     if (!rendererRef.current || allTripsRef.current.length === 0) return;
 
     if (animationState.isPlaying) {
-      // Start simulation
-      rendererRef.current.startSimulation();
+      // Start or resume simulation
+      if (rendererRef.current.getIsPaused()) {
+        rendererRef.current.resume();
+      } else {
+        rendererRef.current.startSimulation();
+      }
       
       // Update simulation at regular intervals
       updateIntervalRef.current = setInterval(() => {
@@ -194,7 +198,10 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }, 100); // Update every 100ms
       
     } else {
-      // Pause simulation
+      // Pause simulation - freeze dots at current positions
+      if (rendererRef.current && !rendererRef.current.getIsPaused()) {
+        rendererRef.current.pause();
+      }
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
