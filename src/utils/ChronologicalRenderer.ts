@@ -30,9 +30,10 @@ export class ChronologicalRenderer {
   private timeScale: number = 500; // 500x speed (1 real second = 500 simulation seconds) - reduced by 50%
   private readonly MAX_DISPLAYED_TRIPS = 500; // Hard cap on displayed trips
   private totalTripsStarted: number = 0; // Monotonically increasing counter
-  private isPaused: boolean = false;
-  private pauseStartTime: number = 0;
-  private accumulatedPauseTime: number = 0;
+  private simulationTime: number = 0; // Current simulation time in milliseconds since first trip
+  private isRunning: boolean = false;
+  private lastUpdateTime: number = 0;
+  private animationTime: number = 0; // Separate time tracking for animations
 
   constructor(canvas: HTMLCanvasElement, map?: L.Map) {
     this.canvas = canvas;
@@ -57,54 +58,56 @@ export class ChronologicalRenderer {
   }
 
   startSimulation(): void {
-    // Only reset if this is a true restart (not a speed change)
-    if (this.simulationStartTime === 0) {
-      this.simulationStartTime = Date.now();
+    if (this.simulationTime === 0) {
+      // True restart
       this.currentTripIndex = 0;
       this.activeTrips = [];
       this.completedPaths = [];
-      this.simulationTimeOffset = 0;
+      this.simulationTime = 0;
       this.totalTripsStarted = 0;
-      this.isPaused = false;
-      this.pauseStartTime = 0;
-      this.accumulatedPauseTime = 0;
-    } else {
-      // Speed change: preserve current state but update timing reference
-      this.simulationStartTime = Date.now();
     }
-    
+
+    this.isRunning = true;
+    this.lastUpdateTime = Date.now();
     console.log('Starting chronological simulation');
   }
 
   updateSimulation(speed: number): { currentSimTime: Date, tripsStarted: number } {
-    if (this.allTrips.length === 0 || this.simulationStartTime === 0) {
+    if (this.allTrips.length === 0) {
       return { currentSimTime: new Date(), tripsStarted: 0 };
     }
 
-    const realTimeElapsed = Date.now() - this.simulationStartTime;
-    const simulationTimeElapsed = this.simulationTimeOffset + (realTimeElapsed * this.timeScale * speed);
-    
+    // Only advance time if running
+    if (this.isRunning) {
+      const now = Date.now();
+      const realTimeElapsed = now - this.lastUpdateTime;
+      this.simulationTime += realTimeElapsed * this.timeScale * speed;
+      this.lastUpdateTime = now;
+    }
+
     // Calculate current simulation time
     const firstTripTime = this.allTrips[0].startTimestamp * 1000;
-    const currentSimTime = new Date(firstTripTime + simulationTimeElapsed);
+    const currentSimTime = new Date(firstTripTime + this.simulationTime);
 
-    // Start new trips that should have started by now
+    // Start new trips that should have started by now (only if running)
     let tripsStarted = 0;
-    while (this.currentTripIndex < this.allTrips.length) {
-      const trip = this.allTrips[this.currentTripIndex];
-      const tripStartTime = trip.startTimestamp * 1000;
-      
-      if (tripStartTime <= currentSimTime.getTime()) {
-        this.startTrip(trip);
-        this.currentTripIndex++;
-        this.totalTripsStarted++;
-        tripsStarted++;
-      } else {
-        break;
+    if (this.isRunning) {
+      while (this.currentTripIndex < this.allTrips.length) {
+        const trip = this.allTrips[this.currentTripIndex];
+        const tripStartTime = trip.startTimestamp * 1000;
+
+        if (tripStartTime <= currentSimTime.getTime()) {
+          this.startTrip(trip);
+          this.currentTripIndex++;
+          this.totalTripsStarted++;
+          tripsStarted++;
+        } else {
+          break;
+        }
       }
     }
 
-    // Update active trips
+    // Update active trips (always, even when paused, for visual smoothness)
     this.updateActiveTrips();
 
     return { currentSimTime, tripsStarted };
@@ -123,27 +126,25 @@ export class ChronologicalRenderer {
     // Scale it down for visual appeal (e.g., 30-minute trip becomes 3-second animation)
     const animationDuration = Math.max(1000, Math.min(5000, trip.duration / 10));
 
-    const currentTime = Date.now();
     this.activeTrips.push({
       trip,
-      startTime: currentTime,
+      startTime: this.animationTime, // Use animation time instead of Date.now()
       progress: 0,
       animationDuration
     });
   }
 
   private updateActiveTrips(): void {
-    if (this.isPaused) {
-      return; // Don't update trip progress when paused
+    // Update animation time only if running
+    if (this.isRunning) {
+      this.animationTime = Date.now();
     }
+    // If paused, animationTime stays frozen
 
-    const currentTime = Date.now();
-    
     this.activeTrips = this.activeTrips.filter(activeTrip => {
-      // Subtract accumulated pause time from elapsed time calculation
-      const elapsed = currentTime - activeTrip.startTime - this.accumulatedPauseTime;
+      const elapsed = this.animationTime - activeTrip.startTime;
       activeTrip.progress = Math.min(1, elapsed / activeTrip.animationDuration);
-      
+
       if (activeTrip.progress >= 1) {
         // Trip animation completed, add to persistent paths
         this.completedPaths.push({
@@ -152,17 +153,17 @@ export class ChronologicalRenderer {
           color: this.getTripColor(activeTrip.trip),
           opacity: 0.6,
           thickness: 2,
-          completedAt: currentTime
+          completedAt: this.animationTime // Use animation time instead of Date.now()
         });
-        
+
         // Enforce FIFO cap on completed paths
         if (this.completedPaths.length > this.MAX_DISPLAYED_TRIPS) {
           this.completedPaths.shift(); // Remove oldest completed path
         }
-        
+
         return false; // Remove from active trips
       }
-      
+
       return true; // Keep in active trips
     });
   }
@@ -279,10 +280,11 @@ export class ChronologicalRenderer {
   render(): void {
     // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    const currentTime = Date.now();
-    
-    // Fade old completed paths
+
+    // Use animation time for consistent fading behavior
+    const currentTime = this.animationTime;
+
+    // Fade old completed paths (only age them if running)
     this.completedPaths = this.completedPaths.filter(path => {
       const age = currentTime - path.completedAt;
       const maxAge = 300000; // 5 minutes
@@ -322,33 +324,13 @@ export class ChronologicalRenderer {
     this.currentTripIndex = 0;
     this.activeTrips = [];
     this.completedPaths = [];
-    this.simulationStartTime = 0;
-    this.simulationTimeOffset = 0;
+    this.simulationTime = 0;
     this.totalTripsStarted = 0;
-    this.isPaused = false;
-    this.pauseStartTime = 0;
-    this.accumulatedPauseTime = 0;
+    this.isRunning = false;
+    this.animationTime = 0;
+    this.lastUpdateTime = 0;
   }
 
-  pause(): void {
-    if (!this.isPaused) {
-      this.isPaused = true;
-      this.pauseStartTime = Date.now();
-    }
-  }
-
-  resume(): void {
-    if (this.isPaused) {
-      this.isPaused = false;
-      // Add the pause duration to accumulated pause time
-      this.accumulatedPauseTime += Date.now() - this.pauseStartTime;
-      this.pauseStartTime = 0;
-    }
-  }
-
-  getIsPaused(): boolean {
-    return this.isPaused;
-  }
   getStats() {
     return {
       totalTrips: this.allTrips.length,
@@ -359,5 +341,20 @@ export class ChronologicalRenderer {
       displayedTrips: this.activeTrips.length + this.completedPaths.length,
       progress: this.allTrips.length > 0 ? this.currentTripIndex / this.allTrips.length : 0
     };
+  }
+
+  pause(): void {
+    this.isRunning = false;
+    console.log('Simulation paused');
+  }
+
+  resume(): void {
+    this.isRunning = true;
+    this.lastUpdateTime = Date.now();
+    console.log('Simulation resumed');
+  }
+
+  isPaused(): boolean {
+    return !this.isRunning;
   }
 }

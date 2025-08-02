@@ -154,22 +154,23 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   }, [showMap]);
 
   // Handle animation state changes
+  // Handle animation state changes
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;
 
     if (animationState.isPlaying) {
-      // Start or resume simulation
-      if (rendererRef.current.getIsPaused()) {
-        rendererRef.current.resume();
-      } else {
+      // Start simulation (only if not already started)
+      if (rendererRef.current.getStats().totalTripsStarted === 0) {
         rendererRef.current.startSimulation();
+      } else {
+        rendererRef.current.resume();
       }
-      
+
       // Update simulation at regular intervals
       updateIntervalRef.current = setInterval(() => {
         if (rendererRef.current) {
           const { currentSimTime, tripsStarted } = rendererRef.current.updateSimulation(animationState.speed);
-          
+
           // Update date display when day changes
           if (onDateUpdate && allTripsRef.current.length > 0) {
             const month = String(currentSimTime.getMonth() + 1).padStart(2, '0');
@@ -178,7 +179,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
             const dateStr = `${month}/${day}/${year}`;
             onDateUpdate(dateStr);
           }
-          
+
           // Update time display
           if (onTimeUpdate) {
             const timeStr = currentSimTime.toLocaleTimeString('en-US', {
@@ -188,7 +189,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
             });
             onTimeUpdate(timeStr);
           }
-          
+
           // Update trip counter
           if (onTripCountUpdate) {
             const stats = rendererRef.current.getStats();
@@ -196,10 +197,10 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           }
         }
       }, 100); // Update every 100ms
-      
+
     } else {
-      // Pause simulation - freeze dots at current positions
-      if (rendererRef.current && !rendererRef.current.getIsPaused()) {
+      // Pause simulation
+      if (rendererRef.current) {
         rendererRef.current.pause();
       }
       if (updateIntervalRef.current) {
@@ -215,14 +216,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
 
   // Handle speed changes while preserving timeline position
-  const previousSpeedRef = useRef<number>(animationState.speed);
-  useEffect(() => {
-    if (rendererRef.current && previousSpeedRef.current !== animationState.speed) {
-      // Preserve timeline position when speed changes
-      rendererRef.current.updateSimulationTimeOffset(previousSpeedRef.current);
-      previousSpeedRef.current = animationState.speed;
-    }
-  }, [animationState.speed]);
+  // const previousSpeedRef = useRef<number>(animationState.speed);
+  // useEffect(() => {
+  //   if (rendererRef.current && previousSpeedRef.current !== animationState.speed) {
+  //     // Preserve timeline position when speed changes
+  //     rendererRef.current.updateSimulationTimeOffset(previousSpeedRef.current);
+  //     previousSpeedRef.current = animationState.speed;
+  //   }
+  // }, [animationState.speed]);
 
   // Handle reset
   useEffect(() => {
