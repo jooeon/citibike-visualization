@@ -11,6 +11,7 @@ interface VisualizationCanvasProps {
   onTotalTripsUpdate?: (total: number) => void;
   onTimeUpdate?: (time: string) => void;
   onDateUpdate?: (date: string) => void;
+  onLoadingStateChange?: (isLoading: boolean) => void;
   showMap: boolean;
 }
 
@@ -20,6 +21,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onTotalTripsUpdate,
   onTimeUpdate,
   onDateUpdate,
+  onLoadingStateChange,
   showMap
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const loadChronologicalData = async () => {
     if (!dataLoaderRef.current || !rendererRef.current) return;
 
+    // Set loading state
+    if (onLoadingStateChange) {
+      onLoadingStateChange(true);
+    }
+
     try {
       console.log('Loading chronological trip data...');
       const trips = await dataLoaderRef.current.loadAllData();
@@ -143,6 +150,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
     } catch (error) {
       console.error('Failed to load chronological data:', error);
+    } finally {
+      // Clear loading state
+      if (onLoadingStateChange) {
+        onLoadingStateChange(false);
+      }
     }
   };
 

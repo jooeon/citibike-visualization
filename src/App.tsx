@@ -7,6 +7,7 @@ import type { AnimationState } from './types';
 
 function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<string>('00:00');
   const [currentDate, setCurrentDate] = useState<string>('05/14/2025');
@@ -69,6 +70,9 @@ function App() {
     setCurrentDate(date);
   }, []);
 
+  const handleLoadingStateChange = useCallback((loading: boolean) => {
+    setIsInitialLoading(loading);
+  }, []);
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -78,6 +82,7 @@ function App() {
         onTotalTripsUpdate={handleTotalTripsUpdate}
         onTimeUpdate={handleTimeUpdate}
         onDateUpdate={handleDateUpdate}
+        onLoadingStateChange={handleLoadingStateChange}
         showMap={showMap}
       />
 
@@ -97,6 +102,9 @@ function App() {
 
       {/* Loading Indicator */}
       <LoadingIndicator isVisible={isLoading} message="Loading chronological trip data..." />
+      
+      {/* Initial Data Loading */}
+      <LoadingIndicator isVisible={isInitialLoading} message="Loading NYC CitiBike data..." />
 
       {/* Error Display */}
       {error && (

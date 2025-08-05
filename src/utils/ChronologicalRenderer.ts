@@ -34,6 +34,7 @@ export class ChronologicalRenderer {
   private isRunning: boolean = false;
   private lastUpdateTime: number = 0;
   private animationTime: number = 0; // Separate time tracking for animations
+  private pausedAnimationTime: number = 0; // Frozen animation time when paused
 
   constructor(canvas: HTMLCanvasElement, map?: L.Map) {
     this.canvas = canvas;
@@ -135,11 +136,13 @@ export class ChronologicalRenderer {
   }
 
   private updateActiveTrips(): void {
-    // Update animation time only if running
+    // Update animation time only if running, otherwise keep it frozen
     if (this.isRunning) {
       this.animationTime = Date.now();
+    } else {
+      // When paused, use the frozen animation time
+      this.animationTime = this.pausedAnimationTime;
     }
-    // If paused, animationTime stays frozen
 
     this.activeTrips = this.activeTrips.filter(activeTrip => {
       const elapsed = this.animationTime - activeTrip.startTime;
@@ -328,6 +331,7 @@ export class ChronologicalRenderer {
     this.totalTripsStarted = 0;
     this.isRunning = false;
     this.animationTime = 0;
+    this.pausedAnimationTime = 0;
     this.lastUpdateTime = 0;
   }
 
@@ -345,12 +349,27 @@ export class ChronologicalRenderer {
 
   pause(): void {
     this.isRunning = false;
+    this.pausedAnimationTime = this.animationTime; // Freeze current animation time
     console.log('Simulation paused');
   }
 
   resume(): void {
     this.isRunning = true;
     this.lastUpdateTime = Date.now();
+    // Calculate how long we were paused and adjust animation time
+    const pauseDuration = Date.now() - this.pausedAnimationTime;
+    this.animationTime = Date.now();
+    
+    // Adjust all active trip start times to account for pause duration
+    this.activeTrips.forEach(activeTrip => {
+      activeTrip.startTime += pauseDuration;
+    });
+    
+    // Adjust completed path timestamps
+    this.completedPaths.forEach(path => {
+      path.completedAt += pauseDuration;
+    });
+    
     console.log('Simulation resumed');
   }
 
