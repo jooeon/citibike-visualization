@@ -112,6 +112,33 @@ const StationSelector: React.FC<StationSelectorProps> = ({
         selectedStationIndices.has(getStationIndex(station))
     ).length;
 
+    // Calculate visible stations after all filters are applied
+    const visibleStations = useMemo(() => {
+        const visible: Station[] = [];
+        filteredGroupedStations.forEach((stationList) => {
+            visible.push(...stationList);
+        });
+        return visible;
+    }, [filteredGroupedStations]);
+
+    const handleSelectAllVisible = () => {
+        visibleStations.forEach(station => {
+            const stationIndex = getStationIndex(station);
+            if (!selectedStationIndices.has(stationIndex)) {
+                onStationToggle(stationIndex);
+            }
+        });
+    };
+
+    const handleSelectNoneVisible = () => {
+        visibleStations.forEach(station => {
+            const stationIndex = getStationIndex(station);
+            if (selectedStationIndices.has(stationIndex)) {
+                onStationToggle(stationIndex);
+            }
+        });
+    };
+
     const getBoroughColor = (borough: string) => {
         switch (borough) {
             case 'Manhattan': return 'bg-blue-500/20 border-blue-400/30';
@@ -196,19 +223,19 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                     {/* Station Controls */}
                     <div className="flex items-center justify-between text-sm text-white/60">
-                        <span>{selectedCount} of {stations.length} stations selected</span>
+                        <span>{selectedCount} of {stations.length} stations selected • {visibleStations.length} visible</span>
                         <div className="flex gap-2">
                             <button
-                                onClick={onSelectAll}
+                                onClick={handleSelectAllVisible}
                                 className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
                             >
-                                Select All
+                                Select All Visible
                             </button>
                             <button
-                                onClick={onSelectNone}
+                                onClick={handleSelectNoneVisible}
                                 className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
                             >
-                                Select None
+                                Deselect All Visible
                             </button>
                         </div>
                     </div>
@@ -236,7 +263,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Building2 className="w-4 h-4" />
-                                            <span className="font-medium text-sm">{borough}</span>
+                                            <span className="font-medium text-sm text-white">{borough}</span>
                                         </div>
                                         <div className="text-xs opacity-80">
                                             {stationList.length} stations
@@ -249,6 +276,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     {stationList.map((station) => {
                                         const stationIndex = getStationIndex(station);
                                         const isSelected = selectedStationIndices.has(stationIndex);
+                                        const boroughColorClass = getBoroughColor(borough);
 
                                         return (
                                             <button
@@ -256,12 +284,12 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                 onClick={() => onStationToggle(stationIndex)}
                                                 className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
                                                     isSelected
-                                                        ? 'bg-blue-500/20 border-blue-400/40 text-white'
+                                                        ? `${boroughColorClass} text-white`
                                                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                             >
                                                 {isSelected ? (
-                                                    <CheckSquare className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                                    <CheckSquare className="w-4 h-4 text-white flex-shrink-0" />
                                                 ) : (
                                                     <Square className="w-4 h-4 text-white/40 flex-shrink-0" />
                                                 )}
