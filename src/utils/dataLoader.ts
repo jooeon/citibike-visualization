@@ -1,9 +1,8 @@
-import type { DailyDataFile, ProcessedTrip, Station } from '../types';
+import type { DailyDataFile, ProcessedTrip } from '../types';
 
 export class ChronologicalDataLoader {
   private loadedFiles: Map<string, DailyDataFile> = new Map();
   private allTrips: ProcessedTrip[] = [];
-  private stations: Station[] = [];
   private isLoading: boolean = false;
 
   async loadAllData(): Promise<ProcessedTrip[]> {
@@ -15,9 +14,6 @@ export class ChronologicalDataLoader {
     console.log('Starting to load chronological trip data...');
 
     try {
-      // Load stations data first
-      await this.loadStations();
-
       // Get list of available JSON files
       const fileNames = await this.getAvailableFiles();
       console.log(`Found ${fileNames.length} data files:`, fileNames);
@@ -54,24 +50,6 @@ export class ChronologicalDataLoader {
       return this.generateMockData();
     } finally {
       this.isLoading = false;
-    }
-  }
-
-  private async loadStations(): Promise<void> {
-    try {
-      console.log('Loading stations data...');
-      const response = await fetch('/data/stations.json');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load stations: HTTP ${response.status}`);
-      }
-
-      this.stations = await response.json();
-      console.log(`Loaded ${this.stations.length} stations`);
-      
-    } catch (error) {
-      console.warn('Failed to load stations data:', error);
-      this.stations = [];
     }
   }
 
@@ -133,9 +111,7 @@ export class ChronologicalDataLoader {
           endLat: rawTrip.el,
           endLng: rawTrip.en,
           duration: (rawTrip.et - rawTrip.st) * 1000, // Convert to milliseconds
-          startTimestamp: rawTrip.st,
-          startStationIndex: rawTrip.si || -1,
-          endStationIndex: rawTrip.ei || -1
+          startTimestamp: rawTrip.st
         };
 
         allProcessedTrips.push(processedTrip);
@@ -219,9 +195,7 @@ export class ChronologicalDataLoader {
         endLat,
         endLng,
         duration,
-        startTimestamp: Math.floor(startTime.getTime() / 1000),
-        startStationIndex: Math.floor(Math.random() * 100), // Mock station index
-        endStationIndex: Math.floor(Math.random() * 100)
+        startTimestamp: Math.floor(startTime.getTime() / 1000)
       });
     }
 
@@ -249,25 +223,5 @@ export class ChronologicalDataLoader {
       start: new Date(this.allTrips[0].startTimestamp * 1000),
       end: new Date(this.allTrips[this.allTrips.length - 1].startTimestamp * 1000)
     };
-  }
-
-  getStations(): Station[] {
-    return this.stations;
-  }
-
-  getUniqueStartStations(): Station[] {
-    if (this.stations.length === 0 || this.allTrips.length === 0) {
-      return [];
-    }
-
-    const usedStationIndices = new Set(
-      this.allTrips
-        .map(trip => trip.startStationIndex)
-        .filter(index => index >= 0 && index < this.stations.length)
-    );
-
-    return Array.from(usedStationIndices)
-      .map(index => this.stations[index])
-      .sort((a, b) => b.usage - a.usage); // Sort by usage, highest first
   }
 }
