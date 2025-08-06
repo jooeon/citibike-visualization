@@ -221,6 +221,35 @@ export class ChronologicalRenderer {
     console.log('Pre-computing station trip counts...');
     this.stationTripCounts.clear();
     
+    // Debug: Log raw trip data structure
+    console.log('=== DEBUGGING STATION INDEX 12 ===');
+    const sampleTrips = this.allTrips.slice(0, 100);
+    console.log('Sample trips structure:', sampleTrips.map(trip => ({
+      id: trip.id,
+      startStationIndex: trip.startStationIndex,
+      startLat: trip.startLat,
+      startLng: trip.startLng,
+      startTime: trip.startTime.toISOString()
+    })));
+    
+    // Debug: Count trips with station index 12 specifically
+    const tripsWithIndex12 = this.allTrips.filter(trip => trip.startStationIndex === 12);
+    console.log(`Found ${tripsWithIndex12.length} trips with startStationIndex === 12`);
+    
+    // Debug: Check for different data types or values that might match 12
+    const allStartStationValues = new Set();
+    this.allTrips.slice(0, 1000).forEach(trip => {
+      allStartStationValues.add(`${trip.startStationIndex} (${typeof trip.startStationIndex})`);
+    });
+    console.log('Unique startStationIndex values and types (first 1000 trips):', Array.from(allStartStationValues).sort());
+    
+    // Debug: Check if station index 12 exists in stations array
+    if (this.stations[12]) {
+      console.log('Station at index 12:', this.stations[12]);
+    } else {
+      console.log('No station found at index 12');
+    }
+    
     // Count trips for each station from ALL trips (not filtered)
     this.allTrips.forEach(trip => {
       if (trip.startStationIndex !== undefined && 
@@ -228,8 +257,21 @@ export class ChronologicalRenderer {
           trip.startStationIndex < this.stations.length) {
         const currentCount = this.stationTripCounts.get(trip.startStationIndex) || 0;
         this.stationTripCounts.set(trip.startStationIndex, currentCount + 1);
+        
+        // Debug: Log when we find station index 12
+        if (trip.startStationIndex === 12) {
+          console.log('Found trip with station index 12:', {
+            tripId: trip.id,
+            startStationIndex: trip.startStationIndex,
+            startTime: trip.startTime.toISOString(),
+            newCount: currentCount + 1
+          });
+        }
       }
     });
+    
+    // Debug: Final count for station 12
+    console.log('Final trip count for station index 12:', this.stationTripCounts.get(12) || 0);
     
     this.stationTripCountsVersion++;
     

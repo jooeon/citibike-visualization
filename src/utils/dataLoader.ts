@@ -120,7 +120,19 @@ export class ChronologicalDataLoader {
     const allProcessedTrips: ProcessedTrip[] = [];
     let tripIdCounter = 0;
 
+    console.log('=== DEBUGGING RAW TRIP DATA PROCESSING ===');
+    
     this.loadedFiles.forEach((dailyData, fileName) => {
+      console.log(`Processing ${fileName} with ${dailyData.trips.length} trips`);
+      
+      // Debug: Check raw data for station index 12
+      const rawTripsWithSi12 = dailyData.trips.filter(rawTrip => rawTrip.si === 12);
+      console.log(`Raw trips with si:12 in ${fileName}:`, rawTripsWithSi12.length);
+      
+      if (rawTripsWithSi12.length > 0) {
+        console.log('Sample raw trip with si:12:', rawTripsWithSi12[0]);
+      }
+      
       dailyData.trips.forEach((rawTrip) => {
         // Validate trip data
         if (!this.isValidTrip(rawTrip)) {
@@ -141,10 +153,24 @@ export class ChronologicalDataLoader {
           endStationIndex: rawTrip.ei
         };
 
+        // Debug: Log when we process a trip with station index 12
+        if (rawTrip.si === 12) {
+          console.log('Processing trip with si:12:', {
+            rawSi: rawTrip.si,
+            processedStartStationIndex: processedTrip.startStationIndex,
+            tripId: processedTrip.id,
+            startTime: processedTrip.startTime.toISOString()
+          });
+        }
+        
         allProcessedTrips.push(processedTrip);
       });
     });
 
+    // Debug: Final count of processed trips with station index 12
+    const finalTripsWithIndex12 = allProcessedTrips.filter(trip => trip.startStationIndex === 12);
+    console.log(`Final processed trips with startStationIndex === 12: ${finalTripsWithIndex12.length}`);
+    
     return allProcessedTrips;
   }
 
