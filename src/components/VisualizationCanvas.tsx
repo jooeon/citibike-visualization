@@ -183,6 +183,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
   // Handle station filter changes
   useEffect(() => {
+    if (!rendererRef.current || selectedStationIndices.size === 0) return;
+
     if (rendererRef.current) {
       rendererRef.current.setSelectedStations(selectedStationIndices);
       
@@ -207,7 +209,30 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         onStationTripCountsUpdate(counts);
       }
     }
-  }
+  }, [selectedStationIndices]);
+
+  // Separate effect for updating parent state to avoid circular dependencies
+  useEffect(() => {
+    if (!rendererRef.current) return;
+
+    const stats = rendererRef.current.getStats();
+    
+    if (onTotalTripsUpdate) {
+      onTotalTripsUpdate(stats.totalAvailableTrips);
+    }
+    
+    if (onFilteredTripsUpdate) {
+      onFilteredTripsUpdate(stats.filteredTrips || []);
+    }
+    
+    if (onStationTripCountsUpdate) {
+      const counts = new Map<number, number>();
+      for (let i = 0; i < stations.length; i++) {
+        counts.set(i, rendererRef.current.getStationTripCount(i));
+      }
+      onStationTripCountsUpdate(counts);
+    }
+  }, [selectedStationIndices, stations.length]);
   )
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;

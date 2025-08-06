@@ -174,6 +174,12 @@ export class ChronologicalRenderer {
   }
 
   setSelectedStations(indices: Set<number>): void {
+    // Prevent unnecessary recalculation if selection hasn't changed
+    if (this.selectedStationIndices.size === indices.size && 
+        [...indices].every(index => this.selectedStationIndices.has(index))) {
+      return;
+    }
+
     this.selectedStationIndices = indices;
     this._applyStationFilter();
     this._precomputeStationTripCounts();
