@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, Map } from 'lucide-react';
+import { Play, Pause, RotateCcw, Map, MapPin } from 'lucide-react';
 import type { AnimationState } from '../types';
 
 interface MinimalControlsProps {
@@ -10,6 +10,9 @@ interface MinimalControlsProps {
   isLoading: boolean;
   showMap: boolean;
   onToggleMap: () => void;
+  onOpenStationSelector: () => void;
+  selectedStationsCount: number;
+  totalStationsCount: number;
 }
 
 const MinimalControls: React.FC<MinimalControlsProps> = ({
@@ -19,7 +22,10 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
   onSpeedChange,
   isLoading,
   showMap,
-  onToggleMap
+  onToggleMap,
+  onOpenStationSelector,
+  selectedStationsCount,
+  totalStationsCount
 }) => {
   return (
     <div className="absolute top-4 right-4 z-[1000]">
@@ -56,6 +62,14 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
           >
             <Map className="w-4 h-4" />
           </button>
+
+          <button
+            onClick={onOpenStationSelector}
+            className="flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-3 py-2 text-white transition-colors"
+            title="Select starting stations"
+          >
+            <MapPin className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Speed Control */}
@@ -76,6 +90,13 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
         {(animationState.tripCounter > 0 || animationState.totalTrips > 0) && (
           <div className="text-white/60 text-xs text-center">
             {animationState.tripCounter}/{animationState.totalTrips} trips
+          </div>
+        )}
+
+        {/* Station Selection Info */}
+        {totalStationsCount > 0 && (
+          <div className="text-white/60 text-xs text-center">
+            {selectedStationsCount}/{totalStationsCount} stations
           </div>
         )}
       </div>

@@ -3,7 +3,8 @@ import VisualizationCanvas from './components/VisualizationCanvas';
 import MinimalControls from './components/MinimalControls';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
-import type { AnimationState } from './types';
+import StationSelector from './components/StationSelector';
+import type { AnimationState, Station } from './types';
 
 function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -12,6 +13,10 @@ function App() {
   const [currentTime, setCurrentTime] = useState<string>('00:00');
   const [currentDate, setCurrentDate] = useState<string>('05/14/2025');
   const [showMap, setShowMap] = useState<boolean>(false);
+  const [showStationSelector, setShowStationSelector] = useState<boolean>(false);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationIndices, setSelectedStationIndices] = useState<Set<number>>(new Set());
+  const [availableStartStations, setAvailableStartStations] = useState<Station[]>([]);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -73,6 +78,37 @@ function App() {
   const handleLoadingStateChange = useCallback((loading: boolean) => {
     setIsInitialLoading(loading);
   }, []);
+
+  const handleStationsLoaded = useCallback((loadedStations: Station[]) => {
+    setStations(loadedStations);
+    // Initially select all stations
+    const allIndices = new Set(loadedStations.map((_, index) => index));
+    setSelectedStationIndices(allIndices);
+  }, []);
+
+  const handleStationToggle = useCallback((stationIndex: number) => {
+    setSelectedStationIndices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stationIndex)) {
+        newSet.delete(stationIndex);
+      } else {
+        newSet.add(stationIndex);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAllStations = useCallback(() => {
+    const allIndices = new Set(availableStartStations.map(station => 
+      stations.findIndex(s => s.id === station.id)
+    ).filter(index => index >= 0));
+    setSelectedStationIndices(allIndices);
+  }, [availableStartStations, stations]);
+
+  const handleSelectNoStations = useCallback(() => {
+    setSelectedStationIndices(new Set());
+  }, []);
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -84,6 +120,8 @@ function App() {
         onDateUpdate={handleDateUpdate}
         onLoadingStateChange={handleLoadingStateChange}
         showMap={showMap}
+        selectedStationIndices={selectedStationIndices}
+        onStationsLoaded={handleStationsLoaded}
       />
 
       {/* Digital Clock */}
@@ -98,6 +136,9 @@ function App() {
         isLoading={isLoading}
         showMap={showMap}
         onToggleMap={handleToggleMap}
+        onOpenStationSelector={() => setShowStationSelector(true)}
+        selectedStationsCount={selectedStationIndices.size}
+        totalStationsCount={availableStartStations.length}
       />
 
       {/* Loading Indicator */}
@@ -105,6 +146,19 @@ function App() {
       
       {/* Initial Data Loading */}
       <LoadingIndicator isVisible={isInitialLoading} message="Loading NYC CitiBike data..." />
+
+      {/* Station Selector */}
+      {showStationSelector && (
+        <StationSelector
+          stations={availableStartStations}
+          selectedStationIndices={selectedStationIndices}
+          onStationToggle={handleStationToggle}
+          onSelectAll={handleSelectAllStations}
+          onSelectNone={handleSelectNoStations}
+          onClose={() => setShowStationSelector(false)}
+          allStations={stations}
+        />
+      )}
 
       {/* Error Display */}
       {error && (

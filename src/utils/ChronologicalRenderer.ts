@@ -27,7 +27,7 @@ export class ChronologicalRenderer {
   private currentTripIndex: number = 0;
   private simulationStartTime: number = 0;
   private timeScale: number = 500; // 500x speed (1 real second = 500 simulation seconds) - reduced by 50%
-  private readonly MAX_DISPLAYED_TRIPS = 500; // Hard cap on displayed trips
+  private readonly MAX_DISPLAYED_TRIPS = 100; // Hard cap on displayed trips
   private totalTripsStarted: number = 0; // Monotonically increasing counter
   private simulationTime: number = 0; // Current simulation time in milliseconds since first trip
   private isRunning: boolean = false;

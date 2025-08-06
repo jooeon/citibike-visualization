@@ -5,6 +5,16 @@ export interface RawTripData {
   sn: number;  // start longitude
   el: number;  // end latitude
   en: number;  // end longitude
+  si: number;  // start station index
+  ei: number;  // end station index
+}
+
+export interface Station {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  usage: number;
 }
 
 export interface DailyDataFile {
@@ -23,6 +33,8 @@ export interface ProcessedTrip {
   endLng: number;
   duration: number; // in milliseconds
   startTimestamp: number; // Unix timestamp for sorting
+  startStationIndex: number;
+  endStationIndex: number;
 }
 
 export interface AnimationState {

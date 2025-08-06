@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ChronologicalRenderer } from '../utils/ChronologicalRenderer';
 import { ChronologicalDataLoader } from '../utils/dataLoader';
-import type { ProcessedTrip, AnimationState } from '../types';
+import type { ProcessedTrip, AnimationState, Station } from '../types';
 
 interface VisualizationCanvasProps {
   animationState: AnimationState;
@@ -13,6 +13,8 @@ interface VisualizationCanvasProps {
   onDateUpdate?: (date: string) => void;
   onLoadingStateChange?: (isLoading: boolean) => void;
   showMap: boolean;
+  selectedStationIndices: Set<number>;
+  onStationsLoaded?: (stations: Station[]) => void;
 }
 
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
@@ -22,7 +24,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onTimeUpdate,
   onDateUpdate,
   onLoadingStateChange,
-  showMap
+  showMap,
+  selectedStationIndices,
+  onStationsLoaded
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,6 +132,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       const trips = await dataLoaderRef.current.loadAllData();
       allTripsRef.current = trips;
       
+      // Get stations and notify parent
+      const stations = dataLoaderRef.current.getStations();
+      if (onStationsLoaded) {
+        onStationsLoaded(stations);
+      }
+      
       // Set trips in renderer
       rendererRef.current.setTrips(trips);
       
@@ -166,9 +176,23 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   }, [showMap]);
 
   // Handle animation state changes
-  // Handle animation state changes
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;
+
+    // Filter trips based on selected stations
+    const filteredTrips = selectedStationIndices.size === 0 
+      ? allTripsRef.current 
+      : allTripsRef.current.filter(trip => 
+          selectedStationIndices.has(trip.startStationIndex)
+        );
+
+    // Update renderer with filtered trips
+    rendererRef.current.setTrips(filteredTrips);
+
+    // Update total trips count
+    if (onTotalTripsUpdate) {
+      onTotalTripsUpdate(filteredTrips.length);
+    }
 
     if (animationState.isPlaying) {
       // Start simulation (only if not already started)
@@ -225,7 +249,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         clearInterval(updateIntervalRef.current);
       }
     };
-  }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
+  }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate, selectedStationIndices, onTotalTripsUpdate]);
 
   // Handle speed changes while preserving timeline position
   // const previousSpeedRef = useRef<number>(animationState.speed);
