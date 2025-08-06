@@ -143,7 +143,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                             return (
                                 <button
-                                    key={station.id}
+                                    key={`${station.id}-${stationIndex}`}
                                     onClick={() => onStationToggle(stationIndex)}
                                     className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
                                         isSelected
