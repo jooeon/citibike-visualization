@@ -1,8 +1,9 @@
-import type { DailyDataFile, ProcessedTrip } from '../types';
+import type { DailyDataFile, ProcessedTrip, Station } from '../types';
 
 export class ChronologicalDataLoader {
   private loadedFiles: Map<string, DailyDataFile> = new Map();
   private allTrips: ProcessedTrip[] = [];
+  private stations: Station[] = [];
   private isLoading: boolean = false;
 
   async loadAllData(): Promise<ProcessedTrip[]> {
@@ -14,6 +15,9 @@ export class ChronologicalDataLoader {
     console.log('Starting to load chronological trip data...');
 
     try {
+      // Load stations data first
+      await this.loadStations();
+
       // Get list of available JSON files
       const fileNames = await this.getAvailableFiles();
       console.log(`Found ${fileNames.length} data files:`, fileNames);
@@ -204,6 +208,10 @@ export class ChronologicalDataLoader {
     
     console.log(`Generated ${mockTrips.length} mock trips`);
     return mockTrips;
+  }
+
+  getStations(): Station[] {
+    return this.stations;
   }
 
   getAllTrips(): ProcessedTrip[] {

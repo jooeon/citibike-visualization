@@ -3,26 +3,30 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ChronologicalRenderer } from '../utils/ChronologicalRenderer';
 import { ChronologicalDataLoader } from '../utils/dataLoader';
-import type { ProcessedTrip, AnimationState } from '../types';
+import type { ProcessedTrip, AnimationState, Station } from '../types';
 
 interface VisualizationCanvasProps {
   animationState: AnimationState;
   onTripCountUpdate?: (count: number) => void;
   onTotalTripsUpdate?: (total: number) => void;
+  onStationsLoaded?: (stations: Station[]) => void;
   onTimeUpdate?: (time: string) => void;
   onDateUpdate?: (date: string) => void;
   onLoadingStateChange?: (isLoading: boolean) => void;
   showMap: boolean;
+  selectedStationIndices: Set<number>;
 }
 
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   animationState,
   onTripCountUpdate,
   onTotalTripsUpdate,
+  onStationsLoaded,
   onTimeUpdate,
   onDateUpdate,
   onLoadingStateChange,
-  showMap
+  showMap,
+  selectedStationIndices
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -125,6 +129,19 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
     try {
       console.log('Loading chronological trip data...');
+      
+      // Load stations first
+      const stations = await dataLoaderRef.current.loadStations();
+      if (onStationsLoaded) {
+        onStationsLoaded(stations);
+      }
+      
+      // Set stations in renderer
+      if (rendererRef.current) {
+        rendererRef.current.setStations(stations);
+      }
+      
+      // Load trip data
       const trips = await dataLoaderRef.current.loadAllData();
       allTripsRef.current = trips;
       
@@ -133,7 +150,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       // Update total trips count
       if (onTotalTripsUpdate) {
-        onTotalTripsUpdate(trips.length);
+        // Get stats to show filtered vs total
+        const stats = rendererRef.current?.getStats();
+        onTotalTripsUpdate(stats?.totalAvailableTrips || trips.length);
       }
       
       // Update date display with first trip date
@@ -157,6 +176,13 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
     }
   };
+
+  // Handle station filter changes
+  useEffect(() => {
+    if (rendererRef.current) {
+      rendererRef.current.setSelectedStations(selectedStationIndices);
+    }
+  }, [selectedStationIndices]);
 
   // Toggle map visibility
   useEffect(() => {

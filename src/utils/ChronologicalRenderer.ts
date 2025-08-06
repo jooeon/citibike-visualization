@@ -175,7 +175,7 @@ export class ChronologicalRenderer {
   }
 
   updateSimulation(speed: number): { currentSimTime: Date, tripsStarted: number } {
-    if (this.allTrips.length === 0) {
+    if (this.filteredTrips.length === 0) {
       return { currentSimTime: new Date(), tripsStarted: 0 };
     }
 
@@ -188,14 +188,14 @@ export class ChronologicalRenderer {
     }
 
     // Calculate current simulation time
-    const firstTripTime = this.allTrips[0].startTimestamp * 1000;
+    const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
     const currentSimTime = new Date(firstTripTime + this.simulationTime);
 
     // Start new trips that should have started by now (only if running)
     let tripsStarted = 0;
     if (this.isRunning) {
-      while (this.currentTripIndex < this.allTrips.length) {
-        const trip = this.allTrips[this.currentTripIndex];
+      while (this.currentTripIndex < this.filteredTrips.length) {
+        const trip = this.filteredTrips[this.currentTripIndex];
         const tripStartTime = trip.startTimestamp * 1000;
 
         if (tripStartTime <= currentSimTime.getTime()) {
@@ -456,17 +456,20 @@ export class ChronologicalRenderer {
 
   getStats() {
     return {
-      totalTrips: this.allTrips.length,
+      totalTrips: this.filteredTrips.length,
       currentTripIndex: this.currentTripIndex,
       totalTripsStarted: this.totalTripsStarted,
       activeTrips: this.activeTrips.length,
       completedPaths: this.completedPaths.length,
       displayedTrips: this.activeTrips.length + this.completedPaths.length,
-      progress: this.allTrips.length > 0 ? this.currentTripIndex / this.allTrips.length : 0,
+      progress: this.filteredTrips.length > 0 ? this.currentTripIndex / this.filteredTrips.length : 0,
       poolStats: {
         activeTripPoolSize: this.activeTripPool.size(),
         completedPathPoolSize: this.completedPathPool.size()
-      }
+      },
+      totalAvailableTrips: this.allTrips.length,
+      selectedStations: this.selectedStationIndices.size,
+      totalStations: this.stations.length
     };
   }
 

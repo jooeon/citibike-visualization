@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, Map } from 'lucide-react';
+import { Play, Pause, RotateCcw, Map, Filter } from 'lucide-react';
 import type { AnimationState } from '../types';
 
 interface MinimalControlsProps {
@@ -10,6 +10,9 @@ interface MinimalControlsProps {
   isLoading: boolean;
   showMap: boolean;
   onToggleMap: () => void;
+  onToggleStationSelector: () => void;
+  selectedStationCount: number;
+  totalStationCount: number;
 }
 
 const MinimalControls: React.FC<MinimalControlsProps> = ({
@@ -19,7 +22,10 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
   onSpeedChange,
   isLoading,
   showMap,
-  onToggleMap
+  onToggleMap,
+  onToggleStationSelector,
+  selectedStationCount,
+  totalStationCount
 }) => {
   return (
     <div className="absolute top-4 right-4 z-[1000]">
@@ -56,7 +62,26 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
           >
             <Map className="w-4 h-4" />
           </button>
+
+          <button
+            onClick={onToggleStationSelector}
+            className={`flex items-center justify-center border border-white/20 rounded px-3 py-2 text-white transition-colors ${
+              selectedStationCount < totalStationCount
+                ? 'bg-orange-600/30 hover:bg-orange-600/40 border-orange-500/40' 
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
+            title="Filter by starting station"
+          >
+            <Filter className="w-4 h-4" />
+          </button>
         </div>
+
+        {/* Station Filter Status */}
+        {totalStationCount > 0 && (
+          <div className="text-white/60 text-xs text-center">
+            {selectedStationCount}/{totalStationCount} stations
+          </div>
+        )}
 
         {/* Speed Control */}
         <div>
@@ -75,7 +100,7 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
         {/* Trip Counter */}
         {(animationState.tripCounter > 0 || animationState.totalTrips > 0) && (
           <div className="text-white/60 text-xs text-center">
-            {animationState.tripCounter}/{animationState.totalTrips} trips
+            {animationState.tripCounter.toLocaleString()}/{animationState.totalTrips.toLocaleString()} trips
           </div>
         )}
       </div>

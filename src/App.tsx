@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import MinimalControls from './components/MinimalControls';
+import StationSelector from './components/StationSelector';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
-import type { AnimationState } from './types';
+import type { AnimationState, Station } from './types';
 
 function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -12,6 +13,9 @@ function App() {
   const [currentTime, setCurrentTime] = useState<string>('00:00');
   const [currentDate, setCurrentDate] = useState<string>('05/14/2025');
   const [showMap, setShowMap] = useState<boolean>(false);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationIndices, setSelectedStationIndices] = useState<Set<number>>(new Set());
+  const [showStationSelector, setShowStationSelector] = useState<boolean>(false);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -48,6 +52,38 @@ function App() {
     setShowMap(prev => !prev);
   };
 
+  const handleStationsLoaded = (loadedStations: Station[]) => {
+    setStations(loadedStations);
+    // Initially select all stations
+    const allIndices = new Set(loadedStations.map((_, index) => index));
+    setSelectedStationIndices(allIndices);
+  };
+
+  const handleStationToggle = (stationIndex: number) => {
+    setSelectedStationIndices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stationIndex)) {
+        newSet.delete(stationIndex);
+      } else {
+        newSet.add(stationIndex);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllStations = () => {
+    const allIndices = new Set(stations.map((_, index) => index));
+    setSelectedStationIndices(allIndices);
+  };
+
+  const handleSelectNoStations = () => {
+    setSelectedStationIndices(new Set());
+  };
+
+  const handleToggleStationSelector = () => {
+    setShowStationSelector(prev => !prev);
+  };
+
   const handleTripCountUpdate = useCallback((count: number) => {
     setAnimationState(prev => ({
       ...prev,
@@ -80,10 +116,12 @@ function App() {
         animationState={animationState}
         onTripCountUpdate={handleTripCountUpdate}
         onTotalTripsUpdate={handleTotalTripsUpdate}
+        onStationsLoaded={handleStationsLoaded}
         onTimeUpdate={handleTimeUpdate}
         onDateUpdate={handleDateUpdate}
         onLoadingStateChange={handleLoadingStateChange}
         showMap={showMap}
+        selectedStationIndices={selectedStationIndices}
       />
 
       {/* Digital Clock */}
@@ -98,6 +136,9 @@ function App() {
         isLoading={isLoading}
         showMap={showMap}
         onToggleMap={handleToggleMap}
+        onToggleStationSelector={handleToggleStationSelector}
+        selectedStationCount={selectedStationIndices.size}
+        totalStationCount={stations.length}
       />
 
       {/* Loading Indicator */}
@@ -105,6 +146,19 @@ function App() {
       
       {/* Initial Data Loading */}
       <LoadingIndicator isVisible={isInitialLoading} message="Loading NYC CitiBike data..." />
+
+      {/* Station Selector Modal */}
+      {showStationSelector && (
+        <StationSelector
+          stations={stations}
+          selectedStationIndices={selectedStationIndices}
+          onStationToggle={handleStationToggle}
+          onSelectAll={handleSelectAllStations}
+          onSelectNone={handleSelectNoStations}
+          onClose={() => setShowStationSelector(false)}
+          allStations={stations}
+        />
+      )}
 
       {/* Error Display */}
       {error && (
