@@ -180,30 +180,30 @@ export class ChronologicalRenderer {
     console.log('Current trip index before filter:', this.currentTripIndex);
     console.log('Active trips before filter:', this.activeTrips.length);
     console.log('Completed paths before filter:', this.completedPaths.length);
+    console.log('Current simulation time before filter:', this.simulationTime);
+    console.log('Current filtered trips length before filter:', this.filteredTrips.length);
 
     // Store current running state
     const wasRunning = this.isRunning;
-    const currentTripIndexBeforeFilter = this.currentTripIndex;
     const simulationTimeBeforeFilter = this.simulationTime;
+    const animationTimeBeforeFilter = this.animationTime;
     
     this.selectedStationIndices = indices;
     this._applyStationFilter();
     
-    console.log('Filtered trips count:', this.filteredTrips.length);
+    console.log('Filtered trips count after filter:', this.filteredTrips.length);
     
     // Filter active trips and completed paths instead of full reset
     this._filterActiveTripsAndPaths();
     
-    console.log('Active trips after filter:', this.activeTrips.length);
-    console.log('Completed paths after filter:', this.completedPaths.length);
+    console.log('Active trips after filtering:', this.activeTrips.length);
+    console.log('Completed paths after filtering:', this.completedPaths.length);
     
     // Adjust currentTripIndex to match the new filtered trips array
-    // Find the equivalent position in the filtered array based on simulation time
-    if (this.filteredTrips.length > 0 && simulationTimeBeforeFilter > 0) {
+    if (this.filteredTrips.length > 0) {
       const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
       const currentSimTime = firstTripTime + simulationTimeBeforeFilter;
       
-      // Find the index in filtered trips that corresponds to current simulation time
       let newTripIndex = 0;
       for (let i = 0; i < this.filteredTrips.length; i++) {
         const tripStartTime = this.filteredTrips[i].startTimestamp * 1000;
@@ -215,14 +215,18 @@ export class ChronologicalRenderer {
       }
       
       this.currentTripIndex = newTripIndex;
-      console.log('Adjusted trip index from', currentTripIndexBeforeFilter, 'to', newTripIndex);
+      console.log('Adjusted trip index to:', newTripIndex, 'for sim time:', currentSimTime);
+    } else {
+      this.currentTripIndex = 0;
+      console.log('No filtered trips available, reset trip index to 0');
     }
     
     // Restore running state if it was running before
     if (wasRunning) {
       this.isRunning = true;
-      this.lastUpdateTime = Date.now(); // Reset timing to prevent jumps
-      console.log('Restored running state');
+      this.lastUpdateTime = Date.now();
+      this.animationTime = animationTimeBeforeFilter; // Preserve animation timeline
+      console.log('Restored running state with preserved animation time:', this.animationTime);
     }
     
     console.log('=== END STATION FILTER DEBUG ===');
@@ -378,19 +382,21 @@ export class ChronologicalRenderer {
       this.totalTripsStarted = 0;
       this.animationTime = 0;
       this.animationStartTime = Date.now();
+      console.log('SIMULATION: True restart - reset all state');
     } else {
       // Resuming - update animation start time to account for pause
       this.animationStartTime = Date.now() - this.animationTime;
+      console.log('SIMULATION: Resuming from pause - animation time:', this.animationTime);
     }
 
     this.isRunning = true;
     this.lastUpdateTime = Date.now();
-    console.log('Starting chronological simulation');
+    console.log('SIMULATION: Starting/resuming chronological simulation');
   }
 
   updateSimulation(speed: number): { currentSimTime: Date, tripsStarted: number } {
     if (this.filteredTrips.length === 0) {
-      console.log('No filtered trips available for simulation');
+      console.log('SIMULATION: No filtered trips available');
       return { currentSimTime: new Date(), tripsStarted: 0 };
     }
 
@@ -400,6 +406,11 @@ export class ChronologicalRenderer {
       const realTimeElapsed = now - this.lastUpdateTime;
       this.simulationTime += realTimeElapsed * this.timeScale * speed;
       this.lastUpdateTime = now;
+      
+      // Debug simulation time updates
+      if (realTimeElapsed > 200) { // Only log significant time jumps
+        console.log('SIMULATION: Large time jump detected:', realTimeElapsed, 'ms, new sim time:', this.simulationTime);
+      }
     }
 
     // Calculate current simulation time
@@ -420,12 +431,28 @@ export class ChronologicalRenderer {
           this.totalTripsStarted++;
           tripsStarted++;
         } else {
+          // Debug why trips aren't starting
+          if (this.currentTripIndex < 5) { // Only log first few trips to avoid spam
+            console.log('SIMULATION: Trip not ready yet. Trip time:', new Date(tripStartTime).toLocaleTimeString(), 
+                       'Current sim time:', currentSimTime.toLocaleTimeString(), 
+                       'Difference:', (tripStartTime - currentSimTime.getTime()) / 1000, 'seconds');
+          }
           break;
         }
       }
       
       if (tripsStarted > 0) {
-        console.log(`Started ${tripsStarted} new trips (index ${initialTripIndex} -> ${this.currentTripIndex})`);
+        console.log(`SIMULATION: Started ${tripsStarted} new trips (index ${initialTripIndex} -> ${this.currentTripIndex})`);
+      }
+      
+      // Debug if no trips are starting when they should be
+      if (tripsStarted === 0 && this.currentTripIndex < this.filteredTrips.length && this.isRunning) {
+        const nextTrip = this.filteredTrips[this.currentTripIndex];
+        const nextTripTime = nextTrip.startTimestamp * 1000;
+        const timeDiff = (nextTripTime - currentSimTime.getTime()) / 1000;
+        if (timeDiff < 60) { // If next trip is within 1 minute, log it
+          console.log('SIMULATION: Next trip in', timeDiff.toFixed(1), 'seconds at', new Date(nextTripTime).toLocaleTimeString());
+        }
       }
     }
 
@@ -449,6 +476,8 @@ export class ChronologicalRenderer {
         trip.startStationIndex < 0 || 
         trip.startStationIndex >= this.stations.length ||
         !this.selectedStationIndices.has(trip.startStationIndex)) {
+      console.log('TRIP START: Skipping trip - invalid or unselected station:', trip.startStationIndex, 
+                 'Selected stations:', Array.from(this.selectedStationIndices).slice(0, 5));
       return; // Skip this trip
     }
 
@@ -720,7 +749,7 @@ export class ChronologicalRenderer {
   pause(): void {
     this.isRunning = false;
     // Animation time is frozen by not updating animationStartTime
-    console.log('Simulation paused');
+    console.log('SIMULATION: Paused at animation time:', this.animationTime);
   }
 
   resume(): void {
@@ -728,7 +757,7 @@ export class ChronologicalRenderer {
     this.lastUpdateTime = Date.now();
     // Adjust animationStartTime to account for pause duration
     this.animationStartTime = Date.now() - this.animationTime;
-    console.log('Simulation resumed');
+    console.log('SIMULATION: Resumed at animation time:', this.animationTime);
   }
 
   isPaused(): boolean {

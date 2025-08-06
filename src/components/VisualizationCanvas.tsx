@@ -130,11 +130,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const loadChronologicalData = async () => {
     if (!dataLoaderRef.current || !rendererRef.current) return;
 
-    // Set loading state
-    if (onLoadingStateChange) {
-      onLoadingStateChange(true);
-    }
-
     try {
       console.log('Loading chronological trip data...');
       
@@ -144,6 +139,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       // Load trip data
       const trips = await dataLoaderRef.current.loadAllData();
       allTripsRef.current = trips;
+      
+      // Set loading state after data is loaded but before processing
+      if (onLoadingStateChange) {
+        onLoadingStateChange(true);
+      }
       
       // Initialize renderer with both trips and stations (this will precompute trip counts)
       console.log('Initializing renderer and precomputing station trip counts...');
@@ -186,8 +186,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       console.log(`Loaded ${trips.length} chronological trips`);
       
-      // Small delay to ensure all state updates are processed before removing loading UI
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Longer delay to ensure all state updates and UI updates are processed
+      await new Promise(resolve => setTimeout(resolve, 500));
       
     } catch (error) {
       console.error('Failed to load chronological data:', error);

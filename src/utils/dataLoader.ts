@@ -160,10 +160,10 @@ export class ChronologicalDataLoader {
 
     // Check if coordinates are within reasonable NYC bounds
     const NYC_BOUNDS = {
-      minLat: 40.4500,  // Far southern Brooklyn/Staten Island
-      maxLat: 40.9200,  // Northern Bronx/Westchester border
-      minLng: -74.2500, // Western Staten Island/New Jersey
-      maxLng: -73.5000  // Eastern Queens/Nassau border
+      minLat: 40.3500,  // Far southern Staten Island
+      maxLat: 41.0000,  // Northern Westchester/Connecticut border
+      minLng: -74.5000, // Western New Jersey
+      maxLng: -73.3000  // Eastern Long Island/Nassau border
     };
 
     if (trip.sl < NYC_BOUNDS.minLat || trip.sl > NYC_BOUNDS.maxLat ||
