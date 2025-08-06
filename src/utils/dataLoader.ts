@@ -79,33 +79,52 @@ export class ChronologicalDataLoader {
   }
 
   private async getAvailableFiles(): Promise<string[]> {
-    // Dynamically discover available files in the data directory
-    const fileNames: string[] = [];
-    
-    // Common date patterns to try (you can extend this list)
-    const datePatterns = [
-      '2025-05-14', '2025-05-15', '2025-05-16', '2025-05-17', '2025-05-18',
-      '2025-05-19', '2025-05-20', '2025-05-21', '2025-05-22', '2025-05-23',
-      '2025-05-24', '2025-05-25', '2025-05-26'
-    ];
-    
-    // Test each potential file to see if it exists
-    const fileCheckPromises = datePatterns.map(async (dateStr) => {
-      try {
-        const response = await fetch(`/data/citibike_${dateStr}.json`, { method: 'HEAD' });
-        if (response.ok) {
-          return `citibike_${dateStr}.json`;
+    try {
+      // Try to get directory listing from the server
+      const response = await fetch('/data/');
+      
+      if (response.ok) {
+        const html = await response.text();
+        // Parse HTML directory listing to find citibike_*.json files
+        const fileMatches = html.match(/citibike_\d{4}-\d{2}-\d{2}\.json/g);
+        if (fileMatches) {
+          const uniqueFiles = [...new Set(fileMatches)];
+          console.log(`Found ${uniqueFiles.length} CitiBike data files:`, uniqueFiles);
+          return uniqueFiles;
         }
-      } catch (error) {
-        // File doesn't exist, ignore
       }
-      return null;
+    } catch (error) {
+      console.warn('Could not get directory listing, falling back to pattern matching');
+    }
+
+    // Fallback: Try a wide range of dates to discover files
+    const fileNames: string[] = [];
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear - 1, currentYear, currentYear + 1]; // Check previous, current, and next year
+    
+    const fileCheckPromises: Promise<string | null>[] = [];
+    
+    // Generate date patterns for multiple years and all months/days
+    years.forEach(year => {
+      for (let month = 1; month <= 12; month++) {
+        for (let day = 1; day <= 31; day++) {
+          const monthStr = String(month).padStart(2, '0');
+          const dayStr = String(day).padStart(2, '0');
+          const dateStr = `${year}-${monthStr}-${dayStr}`;
+          
+          fileCheckPromises.push(
+            fetch(`/data/citibike_${dateStr}.json`, { method: 'HEAD' })
+              .then(response => response.ok ? `citibike_${dateStr}.json` : null)
+              .catch(() => null)
+          );
+        }
+      }
     });
     
     const results = await Promise.all(fileCheckPromises);
     const availableFiles = results.filter(fileName => fileName !== null) as string[];
     
-    console.log(`Found ${availableFiles.length} available data files:`, availableFiles);
+    console.log(`Found ${availableFiles.length} available CitiBike data files:`, availableFiles);
     return availableFiles;
   }
 
