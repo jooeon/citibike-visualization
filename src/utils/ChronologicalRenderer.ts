@@ -178,9 +178,19 @@ export class ChronologicalRenderer {
       return;
     }
 
+    // Store current running state
+    const wasRunning = this.isRunning;
+    
     this.selectedStationIndices = indices;
     this._applyStationFilter();
-    this.resetSimulationState();
+    
+    // Filter active trips and completed paths instead of full reset
+    this._filterActiveTripsAndPaths();
+    
+    // Restore running state if it was running before
+    if (wasRunning) {
+      this.isRunning = true;
+    }
   }
 
   initializeWithData(trips: ProcessedTrip[], stations: Station[]): void {
@@ -215,6 +225,39 @@ export class ChronologicalRenderer {
     }
     
     console.log(`Filtered trips: ${this.filteredTrips.length} of ${this.allTrips.length}`);
+  }
+
+  private _filterActiveTripsAndPaths(): void {
+    // Filter active trips - remove trips from unselected stations
+    const filteredActiveTrips: ActiveTrip[] = [];
+    this.activeTrips.forEach(activeTrip => {
+      if (activeTrip.trip && 
+          activeTrip.trip.startStationIndex !== undefined &&
+          this.selectedStationIndices.has(activeTrip.trip.startStationIndex)) {
+        // Keep this active trip
+        filteredActiveTrips.push(activeTrip);
+      } else {
+        // Return to pool - trip from unselected station
+        this.activeTripPool.release(activeTrip);
+      }
+    });
+    this.activeTrips = filteredActiveTrips;
+
+    // Filter completed paths - remove paths from unselected stations
+    const filteredCompletedPaths: CompletedPath[] = [];
+    this.completedPaths.forEach(completedPath => {
+      if (completedPath.startStationIndex !== undefined &&
+          this.selectedStationIndices.has(completedPath.startStationIndex)) {
+        // Keep this completed path
+        filteredCompletedPaths.push(completedPath);
+      } else {
+        // Return to pool - path from unselected station
+        this.completedPathPool.release(completedPath);
+      }
+    });
+    this.completedPaths = filteredCompletedPaths;
+
+    console.log(`Filtered active trips: ${this.activeTrips.length}, completed paths: ${this.completedPaths.length}`);
   }
 
   private _precomputeStationTripCounts(): void {

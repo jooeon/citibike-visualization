@@ -181,13 +181,13 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 {/* Footer */}
                 <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
                     <div className="text-white/60 text-xs">
-                        Showing trips from selected stations only
+                        Filter will be applied while continuing animation
                     </div>
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors"
                     >
-                        Apply Selection
+                        Apply Filter
                     </button>
                 </div>
             </div>
