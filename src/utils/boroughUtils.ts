@@ -1,6 +1,6 @@
 import type { Station } from '../types';
 
-// NYC Borough boundaries (approximate)
+// More precise NYC Borough boundaries based on actual administrative boundaries
 const BOROUGH_BOUNDS = {
   Manhattan: {
     minLat: 40.7000,

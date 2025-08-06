@@ -124,7 +124,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     const handleSelectAllVisible = () => {
         visibleStations.forEach(station => {
             const stationIndex = getStationIndex(station);
-            if (!selectedStationIndices.has(stationIndex)) {
+            if (stationIndex >= 0 && !selectedStationIndices.has(stationIndex)) {
                 onStationToggle(stationIndex);
             }
         });
@@ -133,7 +133,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     const handleSelectNoneVisible = () => {
         visibleStations.forEach(station => {
             const stationIndex = getStationIndex(station);
-            if (selectedStationIndices.has(stationIndex)) {
+            if (stationIndex >= 0 && selectedStationIndices.has(stationIndex)) {
                 onStationToggle(stationIndex);
             }
         });
@@ -263,7 +263,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     <div className="flex items-center justify-between text-white">
                                         <div className="flex items-center gap-2">
                                             <Building2 className="w-4 h-4" />
-                                            <span className="font-medium text-sm ">{borough}</span>
+                                            <span className="font-medium text-sm text-white">{borough}</span>
                                         </div>
                                         <div className="text-xs opacity-80">
                                             {stationList.length} stations
@@ -284,7 +284,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                 onClick={() => onStationToggle(stationIndex)}
                                                 className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
                                                     isSelected
-                                                        ? `${boroughColorClass} text-white`
+                                                        ? `${getBoroughColor(borough)} text-white`
                                                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                             >
