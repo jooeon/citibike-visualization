@@ -18,6 +18,7 @@ export interface CompletedPath {
   opacity: number;
   thickness: number;
   completedAt: number;
+  startStationIndex?: number;
 
   // Add reset method
   reset(): void;
@@ -82,6 +83,7 @@ const createCompletedPath = (): CompletedPath => ({
   opacity: 0,
   thickness: 0,
   completedAt: 0,
+  startStationIndex: undefined,
   reset() {
     this.startLatLng = [0, 0];
     this.endLatLng = [0, 0];
@@ -89,6 +91,7 @@ const createCompletedPath = (): CompletedPath => ({
     this.opacity = 0;
     this.thickness = 0;
     this.completedAt = 0;
+    this.startStationIndex = undefined;
   }
 });
 
@@ -282,6 +285,11 @@ export class ChronologicalRenderer {
   }
 
   private startTrip(trip: ProcessedTrip): void {
+    // Extra check: Only start trips from selected stations
+    if (trip.startStationIndex !== undefined && !this.selectedStationIndices.has(trip.startStationIndex)) {
+      return; // Skip this trip
+    }
+
     // Calculate animation duration based on actual trip duration
     // Scale it down for visual appeal (e.g., 30-minute trip becomes 3-second animation)
     const animationDuration = Math.max(1000, Math.min(5000, trip.duration / 10));
@@ -316,6 +324,7 @@ export class ChronologicalRenderer {
         completedPath.opacity = 0.6;
         completedPath.thickness = 2;
         completedPath.completedAt = this.animationTime;
+        completedPath.startStationIndex = activeTrip.trip!.startStationIndex;
 
         this.completedPaths.push(completedPath);
 
@@ -453,6 +462,12 @@ export class ChronologicalRenderer {
 
     // Filter and return expired paths to pool
     this.completedPaths = this.completedPaths.filter(path => {
+      // Extra check: Only render paths from selected stations
+      if (path.startStationIndex !== undefined && !this.selectedStationIndices.has(path.startStationIndex)) {
+        this.completedPathPool.release(path); // Return to pool
+        return false; // Remove this path
+      }
+
       const age = currentTime - path.completedAt;
       const maxAge = 300000; // 5 minutes
 
@@ -481,6 +496,11 @@ export class ChronologicalRenderer {
     // Draw active trips
     this.activeTrips.forEach(activeTrip => {
       if (activeTrip.trip) {
+        // Extra check: Only render trips from selected stations
+        if (activeTrip.trip.startStationIndex !== undefined && !this.selectedStationIndices.has(activeTrip.trip.startStationIndex)) {
+          return; // Skip rendering this trip
+        }
+        
         this.drawPath(
             activeTrip.trip.startLat, activeTrip.trip.startLng,
             activeTrip.trip.endLat, activeTrip.trip.endLng,

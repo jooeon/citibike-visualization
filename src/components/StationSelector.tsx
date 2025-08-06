@@ -24,13 +24,43 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredStations = useMemo(() => {
-        if (!searchTerm.trim()) return stations;
+        if (!searchTerm.trim()) {
+            // Sort stations: selected first, then unselected, both alphabetically
+            return [...stations].sort((a, b) => {
+                const aIndex = getStationIndex(a);
+                const bIndex = getStationIndex(b);
+                const aSelected = selectedStationIndices.has(aIndex);
+                const bSelected = selectedStationIndices.has(bIndex);
+                
+                // Selected stations come first
+                if (aSelected && !bSelected) return -1;
+                if (!aSelected && bSelected) return 1;
+                
+                // Within same selection status, sort alphabetically
+                return a.name.localeCompare(b.name);
+            });
+        }
 
         const term = searchTerm.toLowerCase();
-        return stations.filter(station =>
+        const filtered = stations.filter(station =>
             station.name.toLowerCase().includes(term) ||
-            station.id.toLowerCase().includes(term)
+            station.name.toLowerCase().includes(term)
         );
+        
+        // Sort filtered results: selected first, then unselected, both alphabetically
+        return filtered.sort((a, b) => {
+            const aIndex = getStationIndex(a);
+            const bIndex = getStationIndex(b);
+            const aSelected = selectedStationIndices.has(aIndex);
+            const bSelected = selectedStationIndices.has(bIndex);
+            
+            // Selected stations come first
+            if (aSelected && !bSelected) return -1;
+            if (!aSelected && bSelected) return 1;
+            
+            // Within same selection status, sort alphabetically
+            return a.name.localeCompare(b.name);
+        });
     }, [stations, searchTerm]);
 
     const getStationIndex = (station: Station): number => {
@@ -124,7 +154,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                             {station.name}
                                         </div>
                                         <div className="text-xs text-white/60 mt-1">
-                                            ID: {station.id} • {station.usage.toLocaleString()} trips
+                                            Index: {getStationIndex(station)} • {station.usage.toLocaleString()} trips
                                         </div>
                                     </div>
                                 </button>
