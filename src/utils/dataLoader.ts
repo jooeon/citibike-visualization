@@ -202,10 +202,10 @@ export class ChronologicalDataLoader {
 
     // Check if coordinates are within reasonable NYC bounds
     const NYC_BOUNDS = {
-      minLat: 40.6892,  // Southern Brooklyn
+      minLat: 40.6500,  // Southern Brooklyn (expanded to include all CitiBike areas)
       maxLat: 40.8820,  // Northern Bronx  
-      minLng: -74.0259, // Western Manhattan/Jersey City
-      maxLng: -73.7004  // Eastern Queens
+      minLng: -74.0500, // Western Manhattan/Jersey City (expanded)
+      maxLng: -73.6500  // Eastern Queens (expanded)
     };
 
     if (trip.sl < NYC_BOUNDS.minLat || trip.sl > NYC_BOUNDS.maxLat ||
