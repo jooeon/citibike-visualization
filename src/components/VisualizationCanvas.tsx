@@ -140,25 +140,38 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       // Load stations first
       const stations = await dataLoaderRef.current.loadStations();
-      if (onStationsLoaded) {
-        onStationsLoaded(stations);
-      }
-      
-      // Set stations in renderer
-      if (rendererRef.current) {
-        rendererRef.current.setStations(stations);
-      }
       
       // Load trip data
       const trips = await dataLoaderRef.current.loadAllData();
       allTripsRef.current = trips;
       
-      // Set trips in renderer
-      rendererRef.current.setTrips(trips);
+      // Initialize renderer with both trips and stations (this will precompute trip counts)
+      console.log('Initializing renderer and precomputing station trip counts...');
+      rendererRef.current.initializeWithData(trips, stations);
+      
+      // Now that everything is computed, notify parent components
+      if (onStationsLoaded) {
+        onStationsLoaded(stations);
+      }
       
       // Update total trips count
       if (onTotalTripsUpdate) {
         onTotalTripsUpdate(trips.length);
+      }
+      
+      // Update station trip counts
+      if (onStationTripCountsUpdate) {
+        const counts = new Map<number, number>();
+        for (let i = 0; i < stations.length; i++) {
+          counts.set(i, rendererRef.current.getStationTripCount(i));
+        }
+        onStationTripCountsUpdate(counts);
+      }
+      
+      // Update filtered trips
+      if (onFilteredTripsUpdate) {
+        const stats = rendererRef.current.getStats();
+        onFilteredTripsUpdate(stats.filteredTrips || []);
       }
       
       // Update date display with first trip date
@@ -185,7 +198,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
   // Handle station filter changes
   useEffect(() => {
-    if (!rendererRef.current || selectedStationIndices.size === 0) return;
+    if (!rendererRef.current || selectedStationIndices.size === 0 || stations.length === 0) return;
 
     if (rendererRef.current) {
       rendererRef.current.setSelectedStations(selectedStationIndices);
@@ -196,19 +209,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         onTotalTripsUpdate(stats.totalAvailableTrips);
       }
       
-      // Update filtered trips for station selector
-      if (onFilteredTripsUpdate) {
-        const stats = rendererRef.current.getStats();
-        onFilteredTripsUpdate(stats.filteredTrips || []);
-      }
-      
       // Update station trip counts
-      if (onStationTripCountsUpdate) {
+      if (onStationTripCountsUpdate && rendererRef.current.getStationTripCountsVersion() !== stationTripCountsVersionRef.current) {
         const counts = new Map<number, number>();
         for (let i = 0; i < stations.length; i++) {
           counts.set(i, rendererRef.current.getStationTripCount(i));
         }
         onStationTripCountsUpdate(counts);
+        stationTripCountsVersionRef.current = rendererRef.current.getStationTripCountsVersion();
       }
     }
   }, [selectedStationIndices]);
@@ -219,22 +227,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
     const stats = rendererRef.current.getStats();
     
-    if (onTotalTripsUpdate) {
-      onTotalTripsUpdate(stats.totalAvailableTrips);
-    }
-    
-    if (onFilteredTripsUpdate) {
-      onFilteredTripsUpdate(stats.filteredTrips || []);
-    }
-    
-    if (onStationTripCountsUpdate) {
-      const counts = new Map<number, number>();
-      for (let i = 0; i < stations.length; i++) {
-        counts.set(i, rendererRef.current.getStationTripCount(i));
-      }
-      onStationTripCountsUpdate(counts);
-    }
-  }, [selectedStationIndices, stations.length]);
 
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;

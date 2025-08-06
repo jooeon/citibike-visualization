@@ -155,7 +155,6 @@ export class ChronologicalRenderer {
   setTrips(trips: ProcessedTrip[]): void {
     this.allTrips = trips;
     this._applyStationFilter();
-    this._precomputeStationTripCounts();
     this.currentTripIndex = 0;
     this.simulationStartTime = 0;
 
@@ -170,7 +169,6 @@ export class ChronologicalRenderer {
     this.stations = stations;
     // Initialize with all stations selected
     this.selectedStationIndices = new Set(stations.map((_, index) => index));
-    this._applyStationFilter();
   }
 
   setSelectedStations(indices: Set<number>): void {
@@ -184,6 +182,19 @@ export class ChronologicalRenderer {
     this._applyStationFilter();
     this._precomputeStationTripCounts();
     this.resetSimulationState();
+  }
+
+  initializeWithData(trips: ProcessedTrip[], stations: Station[]): void {
+    this.allTrips = trips;
+    this.stations = stations;
+    // Initialize with all stations selected
+    this.selectedStationIndices = new Set(stations.map((_, index) => index));
+    this._applyStationFilter();
+    this._precomputeStationTripCounts();
+    this.currentTripIndex = 0;
+    this.simulationStartTime = 0;
+    
+    console.log(`ChronologicalRenderer: Initialized with ${trips.length} trips and ${stations.length} stations`);
   }
 
   private _applyStationFilter(): void {
