@@ -175,10 +175,28 @@ export class ChronologicalDataLoader {
   }
 
   private isValidTrip(trip: any): boolean {
+    // Debug specific station index 12
+    const isStation12 = trip.si === 12;
+    if (isStation12) {
+      console.log('Validating trip with si:12:', {
+        st: trip.st,
+        et: trip.et,
+        sl: trip.sl,
+        sn: trip.sn,
+        el: trip.el,
+        en: trip.en,
+        si: trip.si,
+        ei: trip.ei
+      });
+    }
+
     // Check if all required fields exist and are valid
     if (typeof trip.st !== 'number' || typeof trip.et !== 'number' ||
         typeof trip.sl !== 'number' || typeof trip.sn !== 'number' ||
         typeof trip.el !== 'number' || typeof trip.en !== 'number') {
+      if (isStation12) {
+        console.log('Station 12 trip REJECTED: Missing or invalid required fields');
+      }
       return false;
     }
 
@@ -194,12 +212,33 @@ export class ChronologicalDataLoader {
         trip.sn < NYC_BOUNDS.minLng || trip.sn > NYC_BOUNDS.maxLng ||
         trip.el < NYC_BOUNDS.minLat || trip.el > NYC_BOUNDS.maxLat ||
         trip.en < NYC_BOUNDS.minLng || trip.en > NYC_BOUNDS.maxLng) {
+      if (isStation12) {
+        console.log('Station 12 trip REJECTED: Coordinates out of NYC bounds', {
+          startLat: trip.sl,
+          startLng: trip.sn,
+          endLat: trip.el,
+          endLng: trip.en,
+          bounds: NYC_BOUNDS
+        });
+      }
       return false;
     }
 
     // Check if timestamps are reasonable
     if (trip.st >= trip.et || trip.et - trip.st > 7200) { // Max 2 hours
+      if (isStation12) {
+        console.log('Station 12 trip REJECTED: Invalid timestamps', {
+          startTime: trip.st,
+          endTime: trip.et,
+          duration: trip.et - trip.st,
+          maxDuration: 7200
+        });
+      }
       return false;
+    }
+
+    if (isStation12) {
+      console.log('Station 12 trip ACCEPTED');
     }
 
     return true;
