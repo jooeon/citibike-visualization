@@ -121,6 +121,10 @@ export class ChronologicalRenderer {
   private animationTime: number = 0; // Separate time tracking for animations
   private animationStartTime: number = 0; // When animation timing started
 
+  // Cached station trip counts for performance
+  private stationTripCounts: Map<number, number> = new Map();
+  private stationTripCountsVersion: number = 0; // Track when cache was last updated
+
   // Object pools
   private activeTripPool: ObjectPool<ActiveTrip>;
   private completedPathPool: ObjectPool<CompletedPath>;
@@ -151,6 +155,7 @@ export class ChronologicalRenderer {
   setTrips(trips: ProcessedTrip[]): void {
     this.allTrips = trips;
     this._applyStationFilter();
+    this._precomputeStationTripCounts();
     this.currentTripIndex = 0;
     this.simulationStartTime = 0;
 
@@ -171,6 +176,7 @@ export class ChronologicalRenderer {
   setSelectedStations(indices: Set<number>): void {
     this.selectedStationIndices = indices;
     this._applyStationFilter();
+    this._precomputeStationTripCounts();
     this.resetSimulationState();
   }
 
@@ -193,6 +199,32 @@ export class ChronologicalRenderer {
     }
     
     console.log(`Filtered trips: ${this.filteredTrips.length} of ${this.allTrips.length}`);
+  }
+
+  private _precomputeStationTripCounts(): void {
+    console.log('Pre-computing station trip counts...');
+    this.stationTripCounts.clear();
+    
+    // Count trips for each station from the filtered dataset
+    this.filteredTrips.forEach(trip => {
+      if (trip.startStationIndex !== undefined && 
+          trip.startStationIndex >= 0 && 
+          trip.startStationIndex < this.stations.length) {
+        const currentCount = this.stationTripCounts.get(trip.startStationIndex) || 0;
+        this.stationTripCounts.set(trip.startStationIndex, currentCount + 1);
+      }
+    });
+    
+    this.stationTripCountsVersion++;
+    console.log(`Pre-computed trip counts for ${this.stationTripCounts.size} stations`);
+  }
+
+  getStationTripCount(stationIndex: number): number {
+    return this.stationTripCounts.get(stationIndex) || 0;
+  }
+
+  getStationTripCountsVersion(): number {
+    return this.stationTripCountsVersion;
   }
 
   private resetSimulationState(): void {

@@ -17,6 +17,7 @@ function App() {
   const [selectedStationIndices, setSelectedStationIndices] = useState<Set<number>>(new Set());
   const [showStationSelector, setShowStationSelector] = useState<boolean>(false);
   const [filteredTrips, setFilteredTrips] = useState<ProcessedTrip[]>([]);
+  const [stationTripCounts, setStationTripCounts] = useState<Map<number, number>>(new Map());
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -115,6 +116,10 @@ function App() {
     setFilteredTrips(trips);
   }, []);
 
+  const handleStationTripCountsUpdate = useCallback((counts: Map<number, number>) => {
+    setStationTripCounts(counts);
+  }, []);
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -165,6 +170,7 @@ function App() {
           onClose={() => setShowStationSelector(false)}
           allStations={stations}
           filteredTrips={filteredTrips}
+          stationTripCounts={stationTripCounts}
         />
       )}
 

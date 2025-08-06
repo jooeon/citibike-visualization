@@ -11,6 +11,7 @@ interface StationSelectorProps {
     onClose: () => void;
     allStations: Station[];
     filteredTrips: ProcessedTrip[];
+    stationTripCounts: Map<number, number>;
 }
 
 const StationSelector: React.FC<StationSelectorProps> = ({
@@ -21,7 +22,8 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                              onSelectNone,
                                                              onClose,
                                                              allStations,
-                                                             filteredTrips
+                                                             filteredTrips,
+                                                             stationTripCounts
                                                          }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -30,7 +32,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     };
 
     const getStationTripCount = (stationIndex: number): number => {
-        return filteredTrips.filter(trip => trip.startStationIndex === stationIndex).length;
+        return stationTripCounts.get(stationIndex) || 0;
     };
 
     const filteredStations = useMemo(() => {

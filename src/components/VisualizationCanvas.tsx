@@ -14,6 +14,7 @@ interface VisualizationCanvasProps {
   onDateUpdate?: (date: string) => void;
   onLoadingStateChange?: (isLoading: boolean) => void;
   onFilteredTripsUpdate?: (trips: ProcessedTrip[]) => void;
+  onStationTripCountsUpdate?: (counts: Map<number, number>) => void;
   showMap: boolean;
   selectedStationIndices: Set<number>;
 }
@@ -27,6 +28,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onDateUpdate,
   onLoadingStateChange,
   onFilteredTripsUpdate,
+  onStationTripCountsUpdate,
   showMap,
   selectedStationIndices
 }) => {
@@ -35,6 +37,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const mapRef = useRef<L.Map | null>(null);
   const rendererRef = useRef<ChronologicalRenderer | null>(null);
   const dataLoaderRef = useRef<ChronologicalDataLoader | null>(null);
+  
+  const stationTripCountsVersionRef = useRef<number>(0);
   
   const animationFrameRef = useRef<number>();
   const updateIntervalRef = useRef<number>();
@@ -193,8 +197,16 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         const stats = rendererRef.current.getStats();
         onFilteredTripsUpdate(stats.filteredTrips || []);
       }
+      
+      // Update station trip counts
+      if (onStationTripCountsUpdate) {
+        const counts = new Map<number, number>();
+        for (let i = 0; i < stations.length; i++) {
+          counts.set(i, rendererRef.current.getStationTripCount(i));
+        }
+        onStationTripCountsUpdate(counts);
+      }
     }
-  }, [selectedStationIndices, onTotalTripsUpdate]);
 
   // Toggle map visibility
   useEffect(() => {
@@ -312,6 +324,16 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
     };
   }, []);
+
+  const handleStationTripCountsUpdate = useCallback(() => {
+    if (rendererRef.current && onFilteredTripsUpdate) {
+      const stats = rendererRef.current.getStats();
+      onFilteredTripsUpdate(stats.filteredTrips || []);
+      
+      // Force re-render of station selector by updating version
+      stationTripCountsVersionRef.current = rendererRef.current.getStationTripCountsVersion();
+    }
+  }, [onFilteredTripsUpdate]);
 
   return (
     <div className="absolute inset-0 w-full h-full">
