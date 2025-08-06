@@ -209,16 +209,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     }
   }
   )
-
-  // Toggle map visibility
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.style.opacity = showMap ? '1' : '0';
-    }
-  }, [showMap]);
-
-  // Handle animation state changes
-  // Handle animation state changes
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;
 
@@ -327,15 +317,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     };
   }, []);
 
-  const handleStationTripCountsUpdate = useCallback(() => {
-    if (rendererRef.current && onFilteredTripsUpdate) {
-      const stats = rendererRef.current.getStats();
-      onFilteredTripsUpdate(stats.filteredTrips || []);
-      
-      // Force re-render of station selector by updating version
-      stationTripCountsVersionRef.current = rendererRef.current.getStationTripCountsVersion();
+  // Toggle map visibility
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.opacity = showMap ? '1' : '0';
     }
-  }, [onFilteredTripsUpdate]);
+  }, [showMap]);
 
   return (
     <div className="absolute inset-0 w-full h-full">
