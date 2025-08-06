@@ -233,7 +233,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       onStationTripCountsUpdate(counts);
     }
   }, [selectedStationIndices, stations.length]);
-  )
+
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;
 
