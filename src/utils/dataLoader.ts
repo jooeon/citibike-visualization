@@ -120,18 +120,8 @@ export class ChronologicalDataLoader {
     const allProcessedTrips: ProcessedTrip[] = [];
     let tripIdCounter = 0;
 
-    console.log('=== DEBUGGING RAW TRIP DATA PROCESSING ===');
-    
     this.loadedFiles.forEach((dailyData, fileName) => {
       console.log(`Processing ${fileName} with ${dailyData.trips.length} trips`);
-      
-      // Debug: Check raw data for station index 12
-      const rawTripsWithSi12 = dailyData.trips.filter(rawTrip => rawTrip.si === 12);
-      console.log(`Raw trips with si:12 in ${fileName}:`, rawTripsWithSi12.length);
-      
-      if (rawTripsWithSi12.length > 0) {
-        console.log('Sample raw trip with si:12:', rawTripsWithSi12[0]);
-      }
       
       dailyData.trips.forEach((rawTrip) => {
         // Validate trip data
@@ -152,51 +142,19 @@ export class ChronologicalDataLoader {
           startStationIndex: rawTrip.si,
           endStationIndex: rawTrip.ei
         };
-
-        // Debug: Log when we process a trip with station index 12
-        if (rawTrip.si === 12) {
-          console.log('Processing trip with si:12:', {
-            rawSi: rawTrip.si,
-            processedStartStationIndex: processedTrip.startStationIndex,
-            tripId: processedTrip.id,
-            startTime: processedTrip.startTime.toISOString()
-          });
-        }
         
         allProcessedTrips.push(processedTrip);
       });
     });
 
-    // Debug: Final count of processed trips with station index 12
-    const finalTripsWithIndex12 = allProcessedTrips.filter(trip => trip.startStationIndex === 12);
-    console.log(`Final processed trips with startStationIndex === 12: ${finalTripsWithIndex12.length}`);
-    
     return allProcessedTrips;
   }
 
   private isValidTrip(trip: any): boolean {
-    // Debug specific station index 12
-    const isStation12 = trip.si === 12;
-    if (isStation12) {
-      console.log('Validating trip with si:12:', {
-        st: trip.st,
-        et: trip.et,
-        sl: trip.sl,
-        sn: trip.sn,
-        el: trip.el,
-        en: trip.en,
-        si: trip.si,
-        ei: trip.ei
-      });
-    }
-
     // Check if all required fields exist and are valid
     if (typeof trip.st !== 'number' || typeof trip.et !== 'number' ||
         typeof trip.sl !== 'number' || typeof trip.sn !== 'number' ||
         typeof trip.el !== 'number' || typeof trip.en !== 'number') {
-      if (isStation12) {
-        console.log('Station 12 trip REJECTED: Missing or invalid required fields');
-      }
       return false;
     }
 
@@ -212,33 +170,12 @@ export class ChronologicalDataLoader {
         trip.sn < NYC_BOUNDS.minLng || trip.sn > NYC_BOUNDS.maxLng ||
         trip.el < NYC_BOUNDS.minLat || trip.el > NYC_BOUNDS.maxLat ||
         trip.en < NYC_BOUNDS.minLng || trip.en > NYC_BOUNDS.maxLng) {
-      if (isStation12) {
-        console.log('Station 12 trip REJECTED: Coordinates out of NYC bounds', {
-          startLat: trip.sl,
-          startLng: trip.sn,
-          endLat: trip.el,
-          endLng: trip.en,
-          bounds: NYC_BOUNDS
-        });
-      }
       return false;
     }
 
     // Check if timestamps are reasonable
     if (trip.st >= trip.et || trip.et - trip.st > 7200) { // Max 2 hours
-      if (isStation12) {
-        console.log('Station 12 trip REJECTED: Invalid timestamps', {
-          startTime: trip.st,
-          endTime: trip.et,
-          duration: trip.et - trip.st,
-          maxDuration: 7200
-        });
-      }
       return false;
-    }
-
-    if (isStation12) {
-      console.log('Station 12 trip ACCEPTED');
     }
 
     return true;

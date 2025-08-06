@@ -172,24 +172,60 @@ export class ChronologicalRenderer {
   }
 
   setSelectedStations(indices: Set<number>): void {
-    // Prevent unnecessary recalculation if selection hasn't changed
-    if (this.selectedStationIndices.size === indices.size && 
-        [...indices].every(index => this.selectedStationIndices.has(index))) {
-      return;
-    }
+    console.log('=== STATION FILTER DEBUG ===');
+    console.log('Previous selection:', Array.from(this.selectedStationIndices).sort((a, b) => a - b));
+    console.log('New selection:', Array.from(indices).sort((a, b) => a - b));
+    console.log('Was running before filter:', this.isRunning);
+    console.log('Current trip index before filter:', this.currentTripIndex);
+    console.log('Active trips before filter:', this.activeTrips.length);
+    console.log('Completed paths before filter:', this.completedPaths.length);
 
     // Store current running state
     const wasRunning = this.isRunning;
+    const currentTripIndexBeforeFilter = this.currentTripIndex;
+    const simulationTimeBeforeFilter = this.simulationTime;
     
     this.selectedStationIndices = indices;
     this._applyStationFilter();
     
+    console.log('Filtered trips count:', this.filteredTrips.length);
+    
     // Filter active trips and completed paths instead of full reset
     this._filterActiveTripsAndPaths();
+    
+    console.log('Active trips after filter:', this.activeTrips.length);
+    console.log('Completed paths after filter:', this.completedPaths.length);
+    
+    // Adjust currentTripIndex to match the new filtered trips array
+    // Find the equivalent position in the filtered array based on simulation time
+    if (this.filteredTrips.length > 0 && simulationTimeBeforeFilter > 0) {
+      const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
+      const currentSimTime = firstTripTime + simulationTimeBeforeFilter;
+      
+      // Find the index in filtered trips that corresponds to current simulation time
+      let newTripIndex = 0;
+      for (let i = 0; i < this.filteredTrips.length; i++) {
+        const tripStartTime = this.filteredTrips[i].startTimestamp * 1000;
+        if (tripStartTime <= currentSimTime) {
+          newTripIndex = i + 1; // Next trip to be started
+        } else {
+          break;
+        }
+      }
+      
+      this.currentTripIndex = newTripIndex;
+      console.log('Adjusted trip index from', currentTripIndexBeforeFilter, 'to', newTripIndex);
+    }
     
     // Restore running state if it was running before
     if (wasRunning) {
       this.isRunning = true;
+      this.lastUpdateTime = Date.now(); // Reset timing to prevent jumps
+      console.log('Restored running state');
+    }
+    
+    console.log('=== END STATION FILTER DEBUG ===');
+  }
     }
   }
 
@@ -228,6 +264,10 @@ export class ChronologicalRenderer {
   }
 
   private _filterActiveTripsAndPaths(): void {
+    console.log('Filtering active trips and paths...');
+    const initialActiveCount = this.activeTrips.length;
+    const initialCompletedCount = this.completedPaths.length;
+    
     // Filter active trips - remove trips from unselected stations
     const filteredActiveTrips: ActiveTrip[] = [];
     this.activeTrips.forEach(activeTrip => {
@@ -257,41 +297,13 @@ export class ChronologicalRenderer {
     });
     this.completedPaths = filteredCompletedPaths;
 
-    console.log(`Filtered active trips: ${this.activeTrips.length}, completed paths: ${this.completedPaths.length}`);
+    console.log(`Filtered active trips: ${initialActiveCount} -> ${this.activeTrips.length}`);
+    console.log(`Filtered completed paths: ${initialCompletedCount} -> ${this.completedPaths.length}`);
   }
 
   private _precomputeStationTripCounts(): void {
     console.log('Pre-computing station trip counts...');
     this.stationTripCounts.clear();
-    
-    // Debug: Log raw trip data structure
-    console.log('=== DEBUGGING STATION INDEX 12 ===');
-    const sampleTrips = this.allTrips.slice(0, 100);
-    console.log('Sample trips structure:', sampleTrips.map(trip => ({
-      id: trip.id,
-      startStationIndex: trip.startStationIndex,
-      startLat: trip.startLat,
-      startLng: trip.startLng,
-      startTime: trip.startTime.toISOString()
-    })));
-    
-    // Debug: Count trips with station index 12 specifically
-    const tripsWithIndex12 = this.allTrips.filter(trip => trip.startStationIndex === 12);
-    console.log(`Found ${tripsWithIndex12.length} trips with startStationIndex === 12`);
-    
-    // Debug: Check for different data types or values that might match 12
-    const allStartStationValues = new Set();
-    this.allTrips.slice(0, 1000).forEach(trip => {
-      allStartStationValues.add(`${trip.startStationIndex} (${typeof trip.startStationIndex})`);
-    });
-    console.log('Unique startStationIndex values and types (first 1000 trips):', Array.from(allStartStationValues).sort());
-    
-    // Debug: Check if station index 12 exists in stations array
-    if (this.stations[12]) {
-      console.log('Station at index 12:', this.stations[12]);
-    } else {
-      console.log('No station found at index 12');
-    }
     
     // Count trips for each station from ALL trips (not filtered)
     this.allTrips.forEach(trip => {
@@ -300,21 +312,8 @@ export class ChronologicalRenderer {
           trip.startStationIndex < this.stations.length) {
         const currentCount = this.stationTripCounts.get(trip.startStationIndex) || 0;
         this.stationTripCounts.set(trip.startStationIndex, currentCount + 1);
-        
-        // Debug: Log when we find station index 12
-        if (trip.startStationIndex === 12) {
-          console.log('Found trip with station index 12:', {
-            tripId: trip.id,
-            startStationIndex: trip.startStationIndex,
-            startTime: trip.startTime.toISOString(),
-            newCount: currentCount + 1
-          });
-        }
       }
     });
-    
-    // Debug: Final count for station 12
-    console.log('Final trip count for station index 12:', this.stationTripCounts.get(12) || 0);
     
     this.stationTripCountsVersion++;
     
@@ -337,17 +336,6 @@ export class ChronologicalRenderer {
     if (stationsWithZeroTrips.length > 0) {
       console.warn(`${stationsWithZeroTrips.length} stations have 0 trips:`, stationsWithZeroTrips.slice(0, 5));
     }
-    
-    // Debug trip data structure
-    const sampleTripsForStructureDebug = this.allTrips.slice(0, 5);
-    console.log('Sample trip data structure:', sampleTripsForStructureDebug.map(trip => ({
-      startStationIndex: trip.startStationIndex,
-      startLat: trip.startLat,
-      startLng: trip.startLng,
-      hasValidIndex: trip.startStationIndex !== undefined && 
-                     trip.startStationIndex >= 0 && 
-                     trip.startStationIndex < this.stations.length
-    })));
   }
 
   getStationTripCount(stationIndex: number): number {
@@ -403,6 +391,7 @@ export class ChronologicalRenderer {
 
   updateSimulation(speed: number): { currentSimTime: Date, tripsStarted: number } {
     if (this.filteredTrips.length === 0) {
+      console.log('No filtered trips available for simulation');
       return { currentSimTime: new Date(), tripsStarted: 0 };
     }
 
@@ -421,6 +410,7 @@ export class ChronologicalRenderer {
     // Start new trips that should have started by now (only if running)
     let tripsStarted = 0;
     if (this.isRunning) {
+      const initialTripIndex = this.currentTripIndex;
       while (this.currentTripIndex < this.filteredTrips.length) {
         const trip = this.filteredTrips[this.currentTripIndex];
         const tripStartTime = trip.startTimestamp * 1000;
@@ -433,6 +423,10 @@ export class ChronologicalRenderer {
         } else {
           break;
         }
+      }
+      
+      if (tripsStarted > 0) {
+        console.log(`Started ${tripsStarted} new trips (index ${initialTripIndex} -> ${this.currentTripIndex})`);
       }
     }
 
@@ -456,8 +450,20 @@ export class ChronologicalRenderer {
         trip.startStationIndex < 0 || 
         trip.startStationIndex >= this.stations.length ||
         !this.selectedStationIndices.has(trip.startStationIndex)) {
+      console.log('Skipping trip - invalid or unselected station:', {
+        tripId: trip.id,
+        startStationIndex: trip.startStationIndex,
+        isSelected: trip.startStationIndex !== undefined ? this.selectedStationIndices.has(trip.startStationIndex) : false,
+        selectedStations: Array.from(this.selectedStationIndices).slice(0, 5)
+      });
       return; // Skip this trip
     }
+
+    console.log('Starting trip:', {
+      tripId: trip.id,
+      startStationIndex: trip.startStationIndex,
+      startTime: trip.startTime.toISOString()
+    });
 
     // Calculate animation duration based on actual trip duration
     // Scale it down for visual appeal (e.g., 30-minute trip becomes 3-second animation)
