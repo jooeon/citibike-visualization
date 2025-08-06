@@ -150,9 +150,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       // Update total trips count
       if (onTotalTripsUpdate) {
-        // Get stats to show filtered vs total
-        const stats = rendererRef.current?.getStats();
-        onTotalTripsUpdate(stats?.totalAvailableTrips || trips.length);
+        onTotalTripsUpdate(trips.length);
       }
       
       // Update date display with first trip date
@@ -181,8 +179,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   useEffect(() => {
     if (rendererRef.current) {
       rendererRef.current.setSelectedStations(selectedStationIndices);
+      
+      // Update total trips count when station selection changes
+      if (onTotalTripsUpdate) {
+        const stats = rendererRef.current.getStats();
+        onTotalTripsUpdate(stats.totalAvailableTrips);
+      }
     }
-  }, [selectedStationIndices]);
+  }, [selectedStationIndices, onTotalTripsUpdate]);
 
   // Toggle map visibility
   useEffect(() => {
