@@ -4,7 +4,7 @@ import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
-import type { AnimationState, Station } from './types';
+import type { AnimationState, Station, ProcessedTrip } from './types';
 
 function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -16,6 +16,7 @@ function App() {
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedStationIndices, setSelectedStationIndices] = useState<Set<number>>(new Set());
   const [showStationSelector, setShowStationSelector] = useState<boolean>(false);
+  const [filteredTrips, setFilteredTrips] = useState<ProcessedTrip[]>([]);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -109,6 +110,11 @@ function App() {
   const handleLoadingStateChange = useCallback((loading: boolean) => {
     setIsInitialLoading(loading);
   }, []);
+
+  const handleFilteredTripsUpdate = useCallback((trips: ProcessedTrip[]) => {
+    setFilteredTrips(trips);
+  }, []);
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -120,6 +126,7 @@ function App() {
         onTimeUpdate={handleTimeUpdate}
         onDateUpdate={handleDateUpdate}
         onLoadingStateChange={handleLoadingStateChange}
+        onFilteredTripsUpdate={handleFilteredTripsUpdate}
         showMap={showMap}
         selectedStationIndices={selectedStationIndices}
       />
@@ -157,6 +164,7 @@ function App() {
           onSelectNone={handleSelectNoStations}
           onClose={() => setShowStationSelector(false)}
           allStations={stations}
+          filteredTrips={filteredTrips}
         />
       )}
 

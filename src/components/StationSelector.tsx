@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, MapPin, Search, CheckSquare, Square } from 'lucide-react';
-import type { Station } from '../types';
+import type { Station, ProcessedTrip } from '../types';
 
 interface StationSelectorProps {
     stations: Station[];
@@ -10,6 +10,7 @@ interface StationSelectorProps {
     onSelectNone: () => void;
     onClose: () => void;
     allStations: Station[];
+    filteredTrips: ProcessedTrip[];
 }
 
 const StationSelector: React.FC<StationSelectorProps> = ({
@@ -19,12 +20,17 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                              onSelectAll,
                                                              onSelectNone,
                                                              onClose,
-                                                             allStations
+                                                             allStations,
+                                                             filteredTrips
                                                          }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const getStationIndex = (station: Station): number => {
         return allStations.findIndex(s => s.name === station.name);
+    };
+
+    const getStationTripCount = (stationIndex: number): number => {
+        return filteredTrips.filter(trip => trip.startStationIndex === stationIndex).length;
     };
 
     const filteredStations = useMemo(() => {
@@ -154,7 +160,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                             {station.name}
                                         </div>
                                         <div className="text-xs text-white/60 mt-1">
-                                            Index: {getStationIndex(station)} • {station.usage.toLocaleString()} trips
+                                            Index: {getStationIndex(station)} • {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
                                         </div>
                                     </div>
                                 </button>

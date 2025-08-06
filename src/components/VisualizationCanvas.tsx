@@ -13,6 +13,7 @@ interface VisualizationCanvasProps {
   onTimeUpdate?: (time: string) => void;
   onDateUpdate?: (date: string) => void;
   onLoadingStateChange?: (isLoading: boolean) => void;
+  onFilteredTripsUpdate?: (trips: ProcessedTrip[]) => void;
   showMap: boolean;
   selectedStationIndices: Set<number>;
 }
@@ -25,6 +26,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onTimeUpdate,
   onDateUpdate,
   onLoadingStateChange,
+  onFilteredTripsUpdate,
   showMap,
   selectedStationIndices
 }) => {
@@ -184,6 +186,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       if (onTotalTripsUpdate) {
         const stats = rendererRef.current.getStats();
         onTotalTripsUpdate(stats.totalAvailableTrips);
+      }
+      
+      // Update filtered trips for station selector
+      if (onFilteredTripsUpdate) {
+        const stats = rendererRef.current.getStats();
+        onFilteredTripsUpdate(stats.filteredTrips || []);
       }
     }
   }, [selectedStationIndices, onTotalTripsUpdate]);

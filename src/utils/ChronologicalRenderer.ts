@@ -556,7 +556,8 @@ export class ChronologicalRenderer {
       },
       totalAvailableTrips: this.filteredTrips.length,
       selectedStations: this.selectedStationIndices.size,
-      totalStations: this.stations.length
+      totalStations: this.stations.length,
+      filteredTrips: this.filteredTrips
     };
   }
 
