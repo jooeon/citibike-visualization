@@ -125,6 +125,7 @@ function App() {
       {/* Main Visualization Canvas */}
       <VisualizationCanvas
         animationState={animationState}
+        stations={stations}
         onTripCountUpdate={handleTripCountUpdate}
         onTotalTripsUpdate={handleTotalTripsUpdate}
         onStationsLoaded={handleStationsLoaded}

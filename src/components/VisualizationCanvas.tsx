@@ -7,6 +7,7 @@ import type { ProcessedTrip, AnimationState, Station } from '../types';
 
 interface VisualizationCanvasProps {
   animationState: AnimationState;
+  stations: Station[];
   onTripCountUpdate?: (count: number) => void;
   onTotalTripsUpdate?: (total: number) => void;
   onStationsLoaded?: (stations: Station[]) => void;
@@ -21,6 +22,7 @@ interface VisualizationCanvasProps {
 
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   animationState,
+  stations,
   onTripCountUpdate,
   onTotalTripsUpdate,
   onStationsLoaded,
