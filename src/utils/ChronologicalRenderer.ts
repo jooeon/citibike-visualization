@@ -296,8 +296,8 @@ export class ChronologicalRenderer {
     }
     
     // Debug trip data structure
-    const sampleTrips = this.allTrips.slice(0, 5);
-    console.log('Sample trip data structure:', sampleTrips.map(trip => ({
+    const sampleTripsForStructureDebug = this.allTrips.slice(0, 5);
+    console.log('Sample trip data structure:', sampleTripsForStructureDebug.map(trip => ({
       startStationIndex: trip.startStationIndex,
       startLat: trip.startLat,
       startLng: trip.startLng,
