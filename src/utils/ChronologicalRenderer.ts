@@ -390,6 +390,7 @@ export class ChronologicalRenderer {
 
   updateSimulation(speed: number): { currentSimTime: Date, tripsStarted: number } {
     if (this.filteredTrips.length === 0) {
+      console.log('No filtered trips available for simulation');
       return { currentSimTime: new Date(), tripsStarted: 0 };
     }
 
@@ -408,6 +409,7 @@ export class ChronologicalRenderer {
     // Start new trips that should have started by now (only if running)
     let tripsStarted = 0;
     if (this.isRunning) {
+      const initialTripIndex = this.currentTripIndex;
       while (this.currentTripIndex < this.filteredTrips.length) {
         const trip = this.filteredTrips[this.currentTripIndex];
         const tripStartTime = trip.startTimestamp * 1000;
@@ -420,6 +422,10 @@ export class ChronologicalRenderer {
         } else {
           break;
         }
+      }
+      
+      if (tripsStarted > 0) {
+        console.log(`Started ${tripsStarted} new trips (index ${initialTripIndex} -> ${this.currentTripIndex})`);
       }
     }
 
@@ -443,8 +449,20 @@ export class ChronologicalRenderer {
         trip.startStationIndex < 0 || 
         trip.startStationIndex >= this.stations.length ||
         !this.selectedStationIndices.has(trip.startStationIndex)) {
+      console.log('Skipping trip - invalid or unselected station:', {
+        tripId: trip.id,
+        startStationIndex: trip.startStationIndex,
+        isSelected: trip.startStationIndex !== undefined ? this.selectedStationIndices.has(trip.startStationIndex) : false,
+        selectedStations: Array.from(this.selectedStationIndices).slice(0, 5)
+      });
       return; // Skip this trip
     }
+
+    console.log('Starting trip:', {
+      tripId: trip.id,
+      startStationIndex: trip.startStationIndex,
+      startTime: trip.startTime.toISOString()
+    });
 
     // Calculate animation duration based on actual trip duration
     // Scale it down for visual appeal (e.g., 30-minute trip becomes 3-second animation)
