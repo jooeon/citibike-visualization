@@ -449,20 +449,8 @@ export class ChronologicalRenderer {
         trip.startStationIndex < 0 || 
         trip.startStationIndex >= this.stations.length ||
         !this.selectedStationIndices.has(trip.startStationIndex)) {
-      console.log('Skipping trip - invalid or unselected station:', {
-        tripId: trip.id,
-        startStationIndex: trip.startStationIndex,
-        isSelected: trip.startStationIndex !== undefined ? this.selectedStationIndices.has(trip.startStationIndex) : false,
-        selectedStations: Array.from(this.selectedStationIndices).slice(0, 5)
-      });
       return; // Skip this trip
     }
-
-    console.log('Starting trip:', {
-      tripId: trip.id,
-      startStationIndex: trip.startStationIndex,
-      startTime: trip.startTime.toISOString()
-    });
 
     // Calculate animation duration based on actual trip duration
     // Scale it down for visual appeal (e.g., 30-minute trip becomes 3-second animation)
