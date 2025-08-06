@@ -181,11 +181,14 @@ export class ChronologicalRenderer {
     } else {
       // Filter trips by selected start stations
       this.filteredTrips = this.allTrips.filter(trip => {
-        // Use station index if available, otherwise include trip
+        // Only include trips with valid station indices that are selected
         if (trip.startStationIndex !== undefined) {
-          return this.selectedStationIndices.has(trip.startStationIndex);
+          // Check if station index is valid and selected
+          return trip.startStationIndex >= 0 && 
+                 trip.startStationIndex < this.stations.length &&
+                 this.selectedStationIndices.has(trip.startStationIndex);
         }
-        return true; // Include trips without station index
+        return false; // Exclude trips without valid station index when filtering
       });
     }
     
@@ -285,8 +288,11 @@ export class ChronologicalRenderer {
   }
 
   private startTrip(trip: ProcessedTrip): void {
-    // Extra check: Only start trips from selected stations
-    if (trip.startStationIndex !== undefined && !this.selectedStationIndices.has(trip.startStationIndex)) {
+    // Robust check: Only start trips from valid, selected stations
+    if (trip.startStationIndex === undefined || 
+        trip.startStationIndex < 0 || 
+        trip.startStationIndex >= this.stations.length ||
+        !this.selectedStationIndices.has(trip.startStationIndex)) {
       return; // Skip this trip
     }
 
@@ -462,8 +468,11 @@ export class ChronologicalRenderer {
 
     // Filter and return expired paths to pool
     this.completedPaths = this.completedPaths.filter(path => {
-      // Extra check: Only render paths from selected stations
-      if (path.startStationIndex !== undefined && !this.selectedStationIndices.has(path.startStationIndex)) {
+      // Robust check: Only render paths from valid, selected stations
+      if (path.startStationIndex === undefined ||
+          path.startStationIndex < 0 ||
+          path.startStationIndex >= this.stations.length ||
+          !this.selectedStationIndices.has(path.startStationIndex)) {
         this.completedPathPool.release(path); // Return to pool
         return false; // Remove this path
       }
@@ -545,7 +554,7 @@ export class ChronologicalRenderer {
         activeTripPoolSize: this.activeTripPool.size(),
         completedPathPoolSize: this.completedPathPool.size()
       },
-      totalAvailableTrips: this.allTrips.length,
+      totalAvailableTrips: this.filteredTrips.length,
       selectedStations: this.selectedStationIndices.size,
       totalStations: this.stations.length
     };
