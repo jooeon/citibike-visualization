@@ -79,17 +79,34 @@ export class ChronologicalDataLoader {
   }
 
   private async getAvailableFiles(): Promise<string[]> {
-    // Try to load files for a date range (you can modify this range as needed)
-    const startDate = new Date('2025-05-14');
-    const endDate = new Date('2025-05-26');
+    // Dynamically discover available files in the data directory
     const fileNames: string[] = [];
-
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD format
-      fileNames.push(`citibike_${dateStr}.json`);
-    }
-
-    return fileNames;
+    
+    // Common date patterns to try (you can extend this list)
+    const datePatterns = [
+      '2025-05-14', '2025-05-15', '2025-05-16', '2025-05-17', '2025-05-18',
+      '2025-05-19', '2025-05-20', '2025-05-21', '2025-05-22', '2025-05-23',
+      '2025-05-24', '2025-05-25', '2025-05-26'
+    ];
+    
+    // Test each potential file to see if it exists
+    const fileCheckPromises = datePatterns.map(async (dateStr) => {
+      try {
+        const response = await fetch(`/data/citibike_${dateStr}.json`, { method: 'HEAD' });
+        if (response.ok) {
+          return `citibike_${dateStr}.json`;
+        }
+      } catch (error) {
+        // File doesn't exist, ignore
+      }
+      return null;
+    });
+    
+    const results = await Promise.all(fileCheckPromises);
+    const availableFiles = results.filter(fileName => fileName !== null) as string[];
+    
+    console.log(`Found ${availableFiles.length} available data files:`, availableFiles);
+    return availableFiles;
   }
 
   private async loadSingleFile(fileName: string): Promise<DailyDataFile> {
