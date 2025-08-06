@@ -133,6 +133,7 @@ function App() {
         onDateUpdate={handleDateUpdate}
         onLoadingStateChange={handleLoadingStateChange}
         onFilteredTripsUpdate={handleFilteredTripsUpdate}
+        onStationTripCountsUpdate={handleStationTripCountsUpdate}
         showMap={showMap}
         selectedStationIndices={selectedStationIndices}
       />
