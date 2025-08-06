@@ -198,7 +198,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
   // Handle station filter changes
   useEffect(() => {
-    if (!rendererRef.current || selectedStationIndices.size === 0 || stations.length === 0) return;
+    if (!rendererRef.current || stations.length === 0) return;
 
     if (rendererRef.current) {
       rendererRef.current.setSelectedStations(selectedStationIndices);
@@ -207,16 +207,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       if (onTotalTripsUpdate) {
         const stats = rendererRef.current.getStats();
         onTotalTripsUpdate(stats.totalAvailableTrips);
-      }
-      
-      // Update station trip counts
-      if (onStationTripCountsUpdate && rendererRef.current.getStationTripCountsVersion() !== stationTripCountsVersionRef.current) {
-        const counts = new Map<number, number>();
-        for (let i = 0; i < stations.length; i++) {
-          counts.set(i, rendererRef.current.getStationTripCount(i));
-        }
-        onStationTripCountsUpdate(counts);
-        stationTripCountsVersionRef.current = rendererRef.current.getStationTripCountsVersion();
       }
     }
   }, [selectedStationIndices]);
