@@ -15,6 +15,7 @@ export interface Station {
   lat: number;
   lng: number;
   usage: number;
+  borough?: string;
 }
 
 export interface DailyDataFile {

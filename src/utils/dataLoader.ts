@@ -1,4 +1,5 @@
 import type { DailyDataFile, ProcessedTrip, Station } from '../types';
+import { assignBoroughsToStations } from './boroughUtils';
 
 export class ChronologicalDataLoader {
   private loadedFiles: Map<string, DailyDataFile> = new Map();
@@ -16,6 +17,10 @@ export class ChronologicalDataLoader {
       }
 
       this.stations = await response.json();
+      
+      // Assign boroughs to stations
+      this.stations = assignBoroughsToStations(this.stations);
+      
       console.log(`Loaded ${this.stations.length} stations`);
       return this.stations;
 

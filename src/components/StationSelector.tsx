@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { X, MapPin, Search, CheckSquare, Square } from 'lucide-react';
+import { X, MapPin, Search, CheckSquare, Square, Building2, Filter } from 'lucide-react';
 import type { Station, ProcessedTrip } from '../types';
+import { groupStationsByBorough, getBoroughStats } from '../utils/boroughUtils';
 
 interface StationSelectorProps {
     stations: Station[];
@@ -26,6 +27,9 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                              stationTripCounts
                                                          }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedBoroughs, setSelectedBoroughs] = useState<Set<string>>(
+        new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'])
+    );
 
     const getStationIndex = (station: Station): number => {
         return allStations.findIndex(s => s.name === station.name);
@@ -35,49 +39,89 @@ const StationSelector: React.FC<StationSelectorProps> = ({
         return stationTripCounts.get(stationIndex) || 0;
     };
 
-    const filteredStations = useMemo(() => {
-        if (!searchTerm.trim()) {
-            // Sort stations: selected first, then unselected, both alphabetically
-            return [...stations].sort((a, b) => {
-                const aIndex = getStationIndex(a);
-                const bIndex = getStationIndex(b);
-                const aSelected = selectedStationIndices.has(aIndex);
-                const bSelected = selectedStationIndices.has(bIndex);
-                
-                // Selected stations come first
-                if (aSelected && !bSelected) return -1;
-                if (!aSelected && bSelected) return 1;
-                
-                // Within same selection status, sort alphabetically
-                return a.name.localeCompare(b.name);
-            });
-        }
-
-        const term = searchTerm.toLowerCase();
-        const filtered = stations.filter(station =>
-            station.name.toLowerCase().includes(term) ||
-            station.name.toLowerCase().includes(term)
-        );
-        
-        // Sort filtered results: selected first, then unselected, both alphabetically
-        return filtered.sort((a, b) => {
-            const aIndex = getStationIndex(a);
-            const bIndex = getStationIndex(b);
-            const aSelected = selectedStationIndices.has(aIndex);
-            const bSelected = selectedStationIndices.has(bIndex);
-            
-            // Selected stations come first
-            if (aSelected && !bSelected) return -1;
-            if (!aSelected && bSelected) return 1;
-            
-            // Within same selection status, sort alphabetically
-            return a.name.localeCompare(b.name);
+    const handleBoroughToggle = (borough: string) => {
+        setSelectedBoroughs(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(borough)) {
+                newSet.delete(borough);
+            } else {
+                newSet.add(borough);
+            }
+            return newSet;
         });
-    }, [stations, searchTerm]);
+    };
+
+    const handleSelectAllBoroughs = () => {
+        setSelectedBoroughs(new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']));
+    };
+
+    const handleSelectNoBoroughs = () => {
+        setSelectedBoroughs(new Set());
+    };
+
+    const groupedStations = useMemo(() => {
+        return groupStationsByBorough(stations);
+    }, [stations]);
+
+    const boroughStats = useMemo(() => {
+        return getBoroughStats(stations, stationTripCounts, allStations);
+    }, [stations, stationTripCounts, allStations]);
+
+    const filteredGroupedStations = useMemo(() => {
+        const filtered = new Map<string, Station[]>();
+        
+        groupedStations.forEach((stationList, borough) => {
+            // Filter by borough selection
+            if (!selectedBoroughs.has(borough)) {
+                return;
+            }
+
+            // Filter by search term
+            let filteredStations = stationList;
+            if (searchTerm.trim()) {
+                const term = searchTerm.toLowerCase();
+                filteredStations = stationList.filter(station =>
+                    station.name.toLowerCase().includes(term)
+                );
+            }
+
+            if (filteredStations.length > 0) {
+                // Sort stations: selected first, then unselected, both alphabetically
+                const sortedStations = filteredStations.sort((a, b) => {
+                    const aIndex = getStationIndex(a);
+                    const bIndex = getStationIndex(b);
+                    const aSelected = selectedStationIndices.has(aIndex);
+                    const bSelected = selectedStationIndices.has(bIndex);
+                    
+                    // Selected stations come first
+                    if (aSelected && !bSelected) return -1;
+                    if (!aSelected && bSelected) return 1;
+                    
+                    // Within same selection status, sort alphabetically
+                    return a.name.localeCompare(b.name);
+                });
+                
+                filtered.set(borough, sortedStations);
+            }
+        });
+        
+        return filtered;
+    }, [groupedStations, selectedBoroughs, searchTerm, selectedStationIndices]);
 
     const selectedCount = stations.filter(station =>
         selectedStationIndices.has(getStationIndex(station))
     ).length;
+
+    const getBoroughColor = (borough: string) => {
+        switch (borough) {
+            case 'Manhattan': return 'bg-blue-500/20 border-blue-400/30';
+            case 'Brooklyn': return 'bg-green-500/20 border-green-400/30';
+            case 'Queens': return 'bg-yellow-500/20 border-yellow-400/30';
+            case 'Bronx': return 'bg-red-500/20 border-red-400/30';
+            case 'Staten Island': return 'bg-purple-500/20 border-purple-400/30';
+            default: return 'bg-gray-500/20 border-gray-400/30';
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center">
@@ -88,12 +132,12 @@ const StationSelector: React.FC<StationSelectorProps> = ({
             />
 
             {/* Modal content */}
-            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <MapPin className="w-5 h-5 text-white/80" />
-                        <h2 className="text-white text-lg font-semibold">Select Starting Stations</h2>
+                        <h2 className="text-white text-lg font-semibold">Filter by Starting Stations</h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -104,21 +148,69 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Stats and Controls */}
-                <div className="flex items-center justify-between mb-4 text-sm text-white/60">
-                    <span>{selectedCount} of {stations.length} stations selected</span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={onSelectAll}
-                            className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
-                        >
-                            Select All
-                        </button>
-                        <button
-                            onClick={onSelectNone}
-                            className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
-                        >
-                            Select None
-                        </button>
+                <div className="space-y-4 mb-4">
+                    {/* Borough Filter */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Building2 className="w-4 h-4 text-white/60" />
+                            <h3 className="text-white/80 text-sm font-medium">Filter by Borough</h3>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'].map(borough => {
+                                const isSelected = selectedBoroughs.has(borough);
+                                const stats = boroughStats.get(borough) || { count: 0, trips: 0 };
+                                
+                                return (
+                                    <button
+                                        key={borough}
+                                        onClick={() => handleBoroughToggle(borough)}
+                                        className={`px-3 py-2 rounded-lg border text-xs transition-all duration-200 ${
+                                            isSelected
+                                                ? `${getBoroughColor(borough)} text-white`
+                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <div className="font-medium">{borough}</div>
+                                        <div className="text-xs opacity-80">
+                                            {stats.count} stations • {stats.trips.toLocaleString()} trips
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleSelectAllBoroughs}
+                                className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                            >
+                                All Boroughs
+                            </button>
+                            <button
+                                onClick={handleSelectNoBoroughs}
+                                className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                            >
+                                No Boroughs
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Station Controls */}
+                    <div className="flex items-center justify-between text-sm text-white/60">
+                        <span>{selectedCount} of {stations.length} stations selected</span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={onSelectAll}
+                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
+                            >
+                                Select All
+                            </button>
+                            <button
+                                onClick={onSelectNone}
+                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
+                            >
+                                Select None
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -136,44 +228,69 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                 {/* Station List */}
                 <div className="flex-1 overflow-y-auto">
-                    <div className="space-y-1">
-                        {filteredStations.map((station) => {
-                            const stationIndex = getStationIndex(station);
-                            const isSelected = selectedStationIndices.has(stationIndex);
-
-                            return (
-                                <button
-                                    key={`${station.id}-${stationIndex}`}
-                                    onClick={() => onStationToggle(stationIndex)}
-                                    className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
-                                        isSelected
-                                            ? 'bg-blue-500/20 border-blue-400/40 text-white'
-                                            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
-                                    }`}
-                                >
-                                    {isSelected ? (
-                                        <CheckSquare className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                                    ) : (
-                                        <Square className="w-4 h-4 text-white/40 flex-shrink-0" />
-                                    )}
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium text-sm truncate">
-                                            {station.name}
+                    <div className="space-y-4">
+                        {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
+                            <div key={borough} className="space-y-2">
+                                {/* Borough Header */}
+                                <div className={`p-3 rounded-lg border ${getBoroughColor(borough)}`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Building2 className="w-4 h-4" />
+                                            <span className="font-medium text-sm">{borough}</span>
                                         </div>
-                                        <div className="text-xs text-white/60 mt-1">
-                                            Index: {getStationIndex(station)} • {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
+                                        <div className="text-xs opacity-80">
+                                            {stationList.length} stations
                                         </div>
                                     </div>
-                                </button>
-                            );
-                        })}
+                                </div>
+
+                                {/* Stations in Borough */}
+                                <div className="space-y-1 ml-4">
+                                    {stationList.map((station) => {
+                                        const stationIndex = getStationIndex(station);
+                                        const isSelected = selectedStationIndices.has(stationIndex);
+
+                                        return (
+                                            <button
+                                                key={`${station.id}-${stationIndex}`}
+                                                onClick={() => onStationToggle(stationIndex)}
+                                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
+                                                    isSelected
+                                                        ? 'bg-blue-500/20 border-blue-400/40 text-white'
+                                                        : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
+                                                }`}
+                                            >
+                                                {isSelected ? (
+                                                    <CheckSquare className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                                ) : (
+                                                    <Square className="w-4 h-4 text-white/40 flex-shrink-0" />
+                                                )}
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-sm truncate">
+                                                        {station.name}
+                                                    </div>
+                                                    <div className="text-xs text-white/60 mt-1">
+                                                        {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    {filteredStations.length === 0 && (
+                    {filteredGroupedStations.size === 0 && (
                         <div className="text-center py-8 text-white/60">
                             <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                            <p>No stations found matching "{searchTerm}"</p>
+                            <p>
+                                {searchTerm.trim() 
+                                    ? `No stations found matching "${searchTerm}"` 
+                                    : 'No boroughs selected'
+                                }
+                            </p>
                         </div>
                     )}
                 </div>
@@ -181,12 +298,13 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 {/* Footer */}
                 <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
                     <div className="text-white/60 text-xs">
-                        Filter will be applied while continuing animation
+                        Filters will be applied while continuing animation
                     </div>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors"
+                        className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors flex items-center gap-2"
                     >
+                        <Filter className="w-4 h-4" />
                         Apply Filter
                     </button>
                 </div>
