@@ -6,6 +6,27 @@ export class ChronologicalDataLoader {
   private stations: Station[] = [];
   private isLoading: boolean = false;
 
+  async loadStations(): Promise<Station[]> {
+    try {
+      console.log('Loading stations data...');
+      const response = await fetch('/data/stations.json');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      this.stations = await response.json();
+      console.log(`Loaded ${this.stations.length} stations`);
+      return this.stations;
+
+    } catch (error) {
+      console.warn('Failed to load stations data:', error);
+      // Return empty array as fallback
+      this.stations = [];
+      return this.stations;
+    }
+  }
+
   async loadAllData(): Promise<ProcessedTrip[]> {
     if (this.isLoading) {
       return this.allTrips;
@@ -115,7 +136,9 @@ export class ChronologicalDataLoader {
           endLat: rawTrip.el,
           endLng: rawTrip.en,
           duration: (rawTrip.et - rawTrip.st) * 1000, // Convert to milliseconds
-          startTimestamp: rawTrip.st
+          startTimestamp: rawTrip.st,
+          startStationIndex: rawTrip.si,
+          endStationIndex: rawTrip.ei
         };
 
         allProcessedTrips.push(processedTrip);

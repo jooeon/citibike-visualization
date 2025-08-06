@@ -101,6 +101,9 @@ export class ChronologicalRenderer {
   private ctx: CanvasRenderingContext2D;
   private map: L.Map | null;
   private allTrips: ProcessedTrip[] = [];
+  private stations: Station[] = [];
+  private selectedStationIndices: Set<number> = new Set();
+  private filteredTrips: ProcessedTrip[] = [];
   private activeTrips: ActiveTrip[] = [];
   private completedPaths: CompletedPath[] = [];
   private currentTripIndex: number = 0;
@@ -144,14 +147,69 @@ export class ChronologicalRenderer {
 
   setTrips(trips: ProcessedTrip[]): void {
     this.allTrips = trips;
+    this._applyStationFilter();
     this.currentTripIndex = 0;
     this.simulationStartTime = 0;
 
-    console.log(`ChronologicalRenderer: Set ${trips.length} trips`);
+    console.log(`ChronologicalRenderer: Set ${trips.length} trips, filtered to ${this.filteredTrips.length}`);
     if (trips.length > 0) {
       console.log(`First trip: ${trips[0].startTime.toLocaleString()}`);
       console.log(`Last trip: ${trips[trips.length - 1].startTime.toLocaleString()}`);
     }
+  }
+
+  setStations(stations: Station[]): void {
+    this.stations = stations;
+    // Initialize with all stations selected
+    this.selectedStationIndices = new Set(stations.map((_, index) => index));
+    this._applyStationFilter();
+  }
+
+  setSelectedStations(indices: Set<number>): void {
+    this.selectedStationIndices = indices;
+    this._applyStationFilter();
+    this.resetSimulationState();
+  }
+
+  private _applyStationFilter(): void {
+    if (this.selectedStationIndices.size === 0 || this.selectedStationIndices.size === this.stations.length) {
+      // No filter or all stations selected
+      this.filteredTrips = [...this.allTrips];
+    } else {
+      // Filter trips by selected start stations
+      this.filteredTrips = this.allTrips.filter(trip => {
+        // Use station index if available, otherwise include trip
+        if (trip.startStationIndex !== undefined) {
+          return this.selectedStationIndices.has(trip.startStationIndex);
+        }
+        return true; // Include trips without station index
+      });
+    }
+    
+    console.log(`Filtered trips: ${this.filteredTrips.length} of ${this.allTrips.length}`);
+  }
+
+  private resetSimulationState(): void {
+    // Return all active trips to pool
+    this.activeTrips.forEach(activeTrip => {
+      this.activeTripPool.release(activeTrip);
+    });
+
+    // Return all completed paths to pool
+    this.completedPaths.forEach(completedPath => {
+      this.completedPathPool.release(completedPath);
+    });
+
+    this.currentTripIndex = 0;
+    this.activeTrips = [];
+    this.completedPaths = [];
+    this.simulationTime = 0;
+    this.totalTripsStarted = 0;
+    this.isRunning = false;
+    this.animationTime = 0;
+    this.animationStartTime = 0;
+    this.lastUpdateTime = 0;
+    this.pausedAnimationTime = 0;
   }
 
   startSimulation(): void {
