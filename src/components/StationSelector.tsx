@@ -260,10 +260,10 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             <div key={borough} className="space-y-2">
                                 {/* Borough Header */}
                                 <div className={`p-3 rounded-lg border ${getBoroughColor(borough)}`}>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between text-white">
                                         <div className="flex items-center gap-2">
                                             <Building2 className="w-4 h-4" />
-                                            <span className="font-medium text-sm text-white">{borough}</span>
+                                            <span className="font-medium text-sm ">{borough}</span>
                                         </div>
                                         <div className="text-xs opacity-80">
                                             {stationList.length} stations

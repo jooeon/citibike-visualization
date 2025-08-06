@@ -85,8 +85,8 @@ export class ChronologicalDataLoader {
 
   private async getAvailableFiles(): Promise<string[]> {
     // Try to load files for a date range (you can modify this range as needed)
-    const startDate = new Date('2025-05-14');
-    const endDate = new Date('2025-05-26');
+    const startDate = new Date('2025-02-01');
+    const endDate = new Date('2025-02-28');
     const fileNames: string[] = [];
 
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
