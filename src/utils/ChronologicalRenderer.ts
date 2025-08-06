@@ -180,7 +180,6 @@ export class ChronologicalRenderer {
 
     this.selectedStationIndices = indices;
     this._applyStationFilter();
-    this._precomputeStationTripCounts();
     this.resetSimulationState();
   }
 
@@ -222,8 +221,8 @@ export class ChronologicalRenderer {
     console.log('Pre-computing station trip counts...');
     this.stationTripCounts.clear();
     
-    // Count trips for each station from the filtered dataset
-    this.filteredTrips.forEach(trip => {
+    // Count trips for each station from ALL trips (not filtered)
+    this.allTrips.forEach(trip => {
       if (trip.startStationIndex !== undefined && 
           trip.startStationIndex >= 0 && 
           trip.startStationIndex < this.stations.length) {
@@ -233,7 +232,37 @@ export class ChronologicalRenderer {
     });
     
     this.stationTripCountsVersion++;
+    
+    // Debug logging
     console.log(`Pre-computed trip counts for ${this.stationTripCounts.size} stations`);
+    console.log('Sample station counts:', Array.from(this.stationTripCounts.entries()).slice(0, 10));
+    
+    // Find stations with 0 trips for debugging
+    const stationsWithZeroTrips = [];
+    for (let i = 0; i < this.stations.length; i++) {
+      if (!this.stationTripCounts.has(i)) {
+        stationsWithZeroTrips.push({
+          index: i,
+          name: this.stations[i]?.name || 'Unknown',
+          id: this.stations[i]?.id || 'Unknown'
+        });
+      }
+    }
+    
+    if (stationsWithZeroTrips.length > 0) {
+      console.warn(`${stationsWithZeroTrips.length} stations have 0 trips:`, stationsWithZeroTrips.slice(0, 5));
+    }
+    
+    // Debug trip data structure
+    const sampleTrips = this.allTrips.slice(0, 5);
+    console.log('Sample trip data structure:', sampleTrips.map(trip => ({
+      startStationIndex: trip.startStationIndex,
+      startLat: trip.startLat,
+      startLng: trip.startLng,
+      hasValidIndex: trip.startStationIndex !== undefined && 
+                     trip.startStationIndex >= 0 && 
+                     trip.startStationIndex < this.stations.length
+    })));
   }
 
   getStationTripCount(stationIndex: number): number {
