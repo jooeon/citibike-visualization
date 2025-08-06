@@ -227,6 +227,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
     const stats = rendererRef.current.getStats();
     
+  }
+  )
 
   useEffect(() => {
     if (!rendererRef.current || allTripsRef.current.length === 0) return;
