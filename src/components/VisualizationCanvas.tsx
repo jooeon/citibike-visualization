@@ -207,6 +207,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         onStationTripCountsUpdate(counts);
       }
     }
+  }
+  )
 
   // Toggle map visibility
   useEffect(() => {
