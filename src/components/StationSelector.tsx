@@ -23,6 +23,10 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                          }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
+    const getStationIndex = (station: Station): number => {
+        return allStations.findIndex(s => s.name === station.name);
+    };
+
     const filteredStations = useMemo(() => {
         if (!searchTerm.trim()) {
             // Sort stations: selected first, then unselected, both alphabetically
@@ -62,10 +66,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
             return a.name.localeCompare(b.name);
         });
     }, [stations, searchTerm]);
-
-    const getStationIndex = (station: Station): number => {
-        return allStations.findIndex(s => s.id === station.id);
-    };
 
     const selectedCount = stations.filter(station =>
         selectedStationIndices.has(getStationIndex(station))
