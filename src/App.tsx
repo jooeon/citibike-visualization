@@ -204,13 +204,13 @@ function App() {
 
       {/* Desktop Copyright - Bottom Right */}
       <div className="hidden sm:block absolute bottom-4 right-4 z-[1000]">
-        <div className="text-white/60 text-xs">
-          ©2025 -{' '}
+        <div className="text-white/60 text-xs font-bold">
+          &copy;{new Date().getFullYear()} -{' '}
           <a 
             href="https://jooeonpark.com/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-white/80 hover:text-white transition-colors underline"
+            className="text-white/80 hover:text-white transition-colors uppercase"
           >
             Joo Eon Park
           </a>
