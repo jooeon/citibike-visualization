@@ -16,6 +16,8 @@ export interface Station {
   lng: number;
   usage: number;
   borough?: string;
+  key?: string;        // Internal key for station matching (debugging)
+  all_ids?: string[];  // Array of all CSV station IDs consolidated (debugging)
 }
 
 export interface DailyDataFile {

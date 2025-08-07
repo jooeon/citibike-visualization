@@ -16,12 +16,31 @@ export class ChronologicalDataLoader {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      this.stations = await response.json();
+      const rawStations = await response.json();
+      
+      // Validate station format and extract only the fields we need
+      this.stations = rawStations.map((station: any) => ({
+        id: station.id,
+        name: station.name,
+        lat: station.lat,
+        lng: station.lng,
+        usage: station.usage,
+        // Optional new fields (for debugging/reference)
+        key: station.key,
+        all_ids: station.all_ids
+      }));
       
       // Assign boroughs to stations
       this.stations = assignBoroughsToStations(this.stations);
       
       console.log(`Loaded ${this.stations.length} stations`);
+      
+      // Log consolidation info if available
+      const stationsWithMultipleIds = this.stations.filter(s => s.all_ids && s.all_ids.length > 1);
+      if (stationsWithMultipleIds.length > 0) {
+        console.log(`Found ${stationsWithMultipleIds.length} consolidated stations (multiple IDs merged)`);
+      }
+      
       return this.stations;
 
     } catch (error) {
