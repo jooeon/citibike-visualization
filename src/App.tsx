@@ -194,6 +194,28 @@ function App() {
 
       {/* Info Button */}
       <InfoButton />
+
+      {/* Mobile Title - Bottom Left */}
+      <div className="absolute bottom-2 left-2 z-[1000] sm:hidden">
+        <h1 className="text-white/90 font-medium text-xs tracking-wide">
+          NYC Citi Bike Data Visualization
+        </h1>
+      </div>
+
+      {/* Desktop Copyright - Bottom Right */}
+      <div className="hidden sm:block absolute bottom-4 right-4 z-[1000]">
+        <div className="text-white/60 text-xs font-bold">
+          &copy;{new Date().getFullYear()} -{' '}
+          <a 
+            href="https://jooeonpark.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-white/80 hover:text-white transition-colors uppercase"
+          >
+            Joo Eon Park
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

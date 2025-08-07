@@ -28,27 +28,27 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
   totalStationCount
 }) => {
   return (
-    <div className="absolute top-4 right-4 z-[1000]">
-      <div className="bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-3 space-y-3">
+    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000]">
+      <div className="bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-2 sm:p-3 space-y-2 sm:space-y-3">
         {/* Control Buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <button
             onClick={onPlayPause}
             disabled={isLoading}
-            className="flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-3 py-2 text-white transition-colors disabled:opacity-50"
+            className="flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50"
           >
             {animationState.isPlaying ? (
-              <Pause className="w-4 h-4" />
+              <Pause className="w-3 h-3 sm:w-4 sm:h-4" />
             ) : (
-              <Play className="w-4 h-4" />
+              <Play className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
           </button>
           
           <button
             onClick={onReset}
-            className="flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-3 py-2 text-white transition-colors"
+            className="flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
 
           <button
@@ -57,10 +57,10 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
               showMap 
                 ? 'bg-emerald-600/30 hover:bg-emerald-600/40 border-emerald-500/40' 
                 : 'bg-white/10 hover:bg-white/20'
-            }`}
+            } px-2 py-1.5 sm:px-3 sm:py-2`}
             title={showMap ? 'Hide map' : 'Show map'}
           >
-            <Map className="w-4 h-4" />
+            <Map className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
 
           <button
@@ -69,16 +69,16 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
               selectedStationCount < totalStationCount
                 ? 'bg-orange-600/30 hover:bg-orange-600/40 border-orange-500/40' 
                 : 'bg-white/10 hover:bg-white/20'
-            }`}
+            } px-2 py-1.5 sm:px-3 sm:py-2`}
             title="Filter by starting station"
           >
-            <Filter className="w-4 h-4" />
+            <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* Station Filter Status */}
         {totalStationCount > 0 && (
-          <div className="text-white/60 text-xs text-center">
+          <div className="text-white/60 text-xs sm:text-xs text-center">
             {selectedStationCount}/{totalStationCount} stations
           </div>
         )}
@@ -99,7 +99,7 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
 
         {/* Trip Counter */}
         {(animationState.tripCounter > 0 || animationState.totalTrips > 0) && (
-          <div className="text-white/60 text-xs text-center">
+          <div className="text-white/60 text-xs sm:text-xs text-center">
             {animationState.tripCounter.toLocaleString()}/{animationState.totalTrips.toLocaleString()} trips
           </div>
         )}
