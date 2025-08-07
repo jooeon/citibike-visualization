@@ -781,6 +781,17 @@ export class ChronologicalRenderer {
     this.simulationTime += hoursInMs;
     this.animationTime += hoursInMs;
     
+    // CRITICAL: Clear all active trips and completed paths to prevent streaking
+    // When jumping time, active trips have invalid animation timings that cause visual artifacts
+    this.activeTrips.forEach(activeTrip => {
+      this.activeTripPool.release(activeTrip);
+    });
+    this.completedPaths.forEach(completedPath => {
+      this.completedPathPool.release(completedPath);
+    });
+    this.activeTrips = [];
+    this.completedPaths = [];
+    
     // Adjust currentTripIndex to match the new time
     const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
     const currentSimTime = firstTripTime + this.simulationTime;
@@ -797,18 +808,13 @@ export class ChronologicalRenderer {
     
     this.currentTripIndex = newTripIndex;
     
-    // Clear active trips and completed paths that are now in the past
-    this.activeTrips.forEach(activeTrip => {
-      this.activeTripPool.release(activeTrip);
-    });
-    this.completedPaths.forEach(completedPath => {
-      this.completedPathPool.release(completedPath);
-    });
-    this.activeTrips = [];
-    this.completedPaths = [];
-    
     // Update total trips started counter
     this.totalTripsStarted = newTripIndex;
+    
+    // Update animation start time to prevent invalid progress calculations
+    if (this.isRunning) {
+      this.animationStartTime = Date.now() - this.animationTime;
+    }
     
     console.log(`Time jumped ${hours} hours. New simulation time: ${new Date(currentSimTime).toLocaleString()}, trip index: ${newTripIndex}`);
   }
