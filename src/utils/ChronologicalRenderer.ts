@@ -688,19 +688,25 @@ export class ChronologicalRenderer {
       this.drawPath(
           path.startLatLng[0], path.startLatLng[1],
           path.endLatLng[0], path.endLatLng[1],
-          path.color, opacity, path.thickness
-      );
-
-      return true;
-    });
-
-    // Draw active trips
-    this.activeTrips.forEach(activeTrip => {
-      if (activeTrip.trip) {
-        // Extra check: Only render trips from selected stations
-        if (activeTrip.trip.startStationIndex !== undefined && !this.selectedStationIndices.has(activeTrip.trip.startStationIndex)) {
-          return; // Skip rendering this trip
-        }
+        // Convert to decimal hour for smoother transitions (0-24)
+        const decimalHour = hour + minute / 60;
+        
+        // Define 13 color stops for very smooth 24-hour cycle
+        const colorStops = [
+            { hour: 0, color: [75, 0, 130] },     // Midnight - Indigo
+            { hour: 2, color: [60, 0, 120] },     // Deep night - Darker purple
+            { hour: 4, color: [45, 0, 100] },     // Pre-dawn - Dark blue-purple
+            { hour: 6, color: [25, 25, 112] },    // Dawn - Midnight blue
+            { hour: 7, color: [70, 130, 180] },   // Early morning - Steel blue
+            { hour: 8, color: [154, 205, 50] },   // Sunrise - Yellow green
+            { hour: 10, color: [255, 215, 0] },   // Morning - Gold
+            { hour: 12, color: [255, 165, 0] },   // Noon - Orange
+            { hour: 16, color: [255, 69, 0] },    // Afternoon - Red orange
+            { hour: 18, color: [220, 20, 60] },   // Evening - Crimson
+            { hour: 20, color: [139, 0, 139] },   // Dusk - Dark magenta
+            { hour: 22, color: [102, 0, 102] },   // Night - Dark purple
+            { hour: 24, color: [75, 0, 130] }     // Midnight - Indigo
+        ];
         
         this.drawPath(
             activeTrip.trip.startLat, activeTrip.trip.startLng,
