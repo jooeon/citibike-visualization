@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ChronologicalRenderer } from '../utils/ChronologicalRenderer';
 import { ChronologicalDataLoader } from '../utils/dataLoader';
+import DayNightOverlay from './DayNightOverlay';
 import type { ProcessedTrip, AnimationState, Station } from '../types';
 
 interface VisualizationCanvasProps {
@@ -45,6 +46,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const animationFrameRef = useRef<number>();
   const updateIntervalRef = useRef<number>();
   const allTripsRef = useRef<ProcessedTrip[]>([]);
+  const [currentSimulationTime, setCurrentSimulationTime] = useState<Date>(new Date());
 
   // Initialize map, canvas, and data loader
   useEffect(() => {
@@ -239,6 +241,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         if (rendererRef.current) {
           const { currentSimTime, tripsStarted } = rendererRef.current.updateSimulation(animationState.speed);
 
+          // Update current simulation time for day/night overlay
+          setCurrentSimulationTime(currentSimTime);
+
           // Update date display when day changes
           if (onDateUpdate && allTripsRef.current.length > 0) {
             const dayName = currentSimTime.toLocaleDateString('en-US', { weekday: 'short' });
@@ -357,8 +362,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ 
           background: showMap ? 'transparent' : '#000000',
-          zIndex: 400
+          zIndex: 600
         }}
+      />
+      
+      {/* Day/Night Cycle Overlay */}
+      <DayNightOverlay 
+        currentTime={currentSimulationTime}
+        isVisible={showMap}
       />
     </div>
   );

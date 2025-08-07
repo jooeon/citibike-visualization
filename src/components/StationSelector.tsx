@@ -252,16 +252,17 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 const stats = boroughStats.get(borough) || { count: 0, trips: 0 };
                                 const isStatenIsland = borough === 'Staten Island';
                                 const isDisabled = isStatenIsland && stats.count === 0;
+                                const hasStations = stats.count > 0;
 
                                 return (
                                     <button
                                         key={borough}
-                                        onClick={() => !isDisabled && handleBoroughToggle(borough)}
+                                        onClick={() => hasStations && handleBoroughToggle(borough)}
                                         disabled={isDisabled}
                                         title={isDisabled ? 'No Staten Island stations available in current dataset' : undefined}
-                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 relative group ${
+                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 relative group cursor-pointer ${
                                             isDisabled
-                                                ? 'bg-gray-800/20 border-gray-600/20 text-gray-500 cursor-not-allowed'
+                                                ? 'bg-gray-800/20 border-gray-600/20 text-gray-500 cursor-not-allowed opacity-50'
                                                 : isFullySelected
                                                 ? `${getBoroughColor(borough)} text-white border-opacity-60 hover:bg-white/10`
                                                 : hasSelected
@@ -279,7 +280,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                         
                                         {/* Tooltip for disabled Staten Island */}
                                         {isDisabled && (
-                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10">
+                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 border border-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10 shadow-lg">
                                                 No Staten Island stations available in current dataset
                                             </div>
                                         )}
@@ -306,7 +307,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                 {/* Station Controls and Sorting */}
                 <div className="flex items-center justify-between text-xs text-white/60 mb-3">
-                    <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected</span>
+                    <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected {/* • {visibleStations.length} visible */}</span>
                     <div className="flex gap-2 items-center">
                         {/* Desktop-only sorting */}
                         <button
@@ -327,7 +328,8 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         </span>
                         </button>
 
-                        {/* <button
+                        {/* Hidden visible selection buttons
+                        <button
                             onClick={handleSelectAllVisible}
                             className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                         >
