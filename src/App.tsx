@@ -4,7 +4,6 @@ import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
-import ProjectTitle from './components/ProjectTitle';
 import InfoButton from './components/InfoButton';
 import type { AnimationState, Station, ProcessedTrip } from './types';
 
@@ -142,9 +141,6 @@ function App() {
 
       {/* Digital Clock */}
       <DigitalClock currentTime={currentTime} currentDate={currentDate} />
-
-      {/* Project Title */}
-      <ProjectTitle />
 
       {/* Minimal Controls */}
       <MinimalControls
