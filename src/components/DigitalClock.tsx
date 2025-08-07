@@ -31,15 +31,18 @@ const DigitalClock: React.FC<DigitalClockProps> = ({
         </div>
         
         {/* Current Time - Centered */}
-        <div className="text-white font-mono text-sm sm:text-xl tracking-wider text-center mb-2">
+        <div className="text-white font-mono text-sm sm:text-xl tracking-wider text-center mb-4">
           {currentTime}
         </div>
+        
+        {/* Divider Line */}
+        <div className="absolute bottom-8 left-3 right-3 h-px bg-white/10"></div>
         
         {/* Time Jump Controls - Positioned in corners */}
         {/* Jump Backward - Bottom Left */}
         <button
           onClick={() => handleTimeJump(-6)}
-          className="absolute bottom-1 left-1 text-white/60 hover:text-white transition-colors p-1 rounded flex items-center gap-1"
+          className="absolute bottom-2 left-2 text-white/60 hover:text-white transition-colors p-1 rounded flex items-center gap-1"
           title="Jump back 6 hours"
         >
           <ChevronLeft className="w-3 h-3" />
@@ -49,7 +52,7 @@ const DigitalClock: React.FC<DigitalClockProps> = ({
         {/* Jump Forward - Bottom Right */}
         <button
           onClick={() => handleTimeJump(6)}
-          className="absolute bottom-1 right-1 text-white/60 hover:text-white transition-colors p-1 rounded flex items-center gap-1"
+          className="absolute bottom-2 right-2 text-white/60 hover:text-white transition-colors p-1 rounded flex items-center gap-1"
           title="Jump forward 6 hours"
         >
           <span className="text-xs font-mono">+6 hrs</span>
