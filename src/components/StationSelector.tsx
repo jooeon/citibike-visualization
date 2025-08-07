@@ -226,17 +226,17 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                     {/* Station Controls */}
                     <div className="flex items-center justify-between text-xs text-white/60">
-                        <span>{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
+                        <span className="text-xs sm:text-xs">{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={handleSelectAllVisible}
-                                className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                                className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
                                 Select All
                             </button>
                             <button
                                 onClick={handleSelectNoneVisible}
-                                className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                                className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
                                 Deselect All
                             </button>
@@ -252,7 +252,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         placeholder="Search stations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
+                        className="w-full pl-10 pr-4 py-1.5 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
                     />
                 </div>
 
