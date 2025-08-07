@@ -289,6 +289,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             className="hidden sm:flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             title="Sort stations"
                         >
+                            <>
                             {sortOrder === 'trips-desc' ? (
                                 <ArrowDown className="w-3 h-3" />
                             ) : sortOrder === 'trips-asc' ? (
@@ -300,6 +301,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 {sortOrder === 'trips-desc' ? 'Trips ↓' :
                                  sortOrder === 'trips-asc' ? 'Trips ↑' : 'Name'}
                             </span>
+                            </>
                         </button>
                         
                         <button
