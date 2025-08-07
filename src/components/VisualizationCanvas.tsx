@@ -196,10 +196,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       // Update date display with first trip date
       if (trips.length > 0 && onDateUpdate) {
         const firstTripDate = new Date(trips[0].startTimestamp * 1000);
+        const dayName = firstTripDate.toLocaleDateString('en-US', { weekday: 'short' });
         const month = String(firstTripDate.getMonth() + 1).padStart(2, '0');
         const day = String(firstTripDate.getDate()).padStart(2, '0');
         const year = firstTripDate.getFullYear();
-        const dateStr = `${month}/${day}/${year}`;
+        const dateStr = `${dayName} ${month}/${day}/${year}`;
         onDateUpdate(dateStr);
       }
       

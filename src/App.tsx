@@ -12,7 +12,7 @@ function App() {
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<string>('00:00');
-  const [currentDate, setCurrentDate] = useState<string>('05/14/2025');
+  const [currentDate, setCurrentDate] = useState<string>('Wed 05/14/2025');
   const [showMap, setShowMap] = useState<boolean>(false);
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedStationIndices, setSelectedStationIndices] = useState<Set<number>>(new Set());
