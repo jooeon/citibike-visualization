@@ -11,7 +11,7 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState<string>('00:00');
+  const [currentTime, setCurrentTime] = useState<string>('12:00 AM');
   const [currentDate, setCurrentDate] = useState<string>('Wed 05/14/2025');
   const [showMap, setShowMap] = useState<boolean>(false);
   const [stations, setStations] = useState<Station[]>([]);
