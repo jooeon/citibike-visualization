@@ -5,7 +5,7 @@ const InfoButton: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="absolute bottom-2 right-2 sm:bottom-4 sm:left-4 z-[1000]">
+    <div className="fixed bottom-2 right-2 sm:bottom-4 sm:left-4 z-[1000]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Collapsed Info Button */}
       {!isExpanded && (
         <button
