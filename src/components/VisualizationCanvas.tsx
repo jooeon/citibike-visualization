@@ -337,16 +337,10 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // Night time (10 PM - 5 AM): lightOpacity remains 0
 
     // Apply smooth easing for more natural transitions
-    lightOpacity = easeInOutCubic(lightOpacity);
 
     // Update tile layer opacity
     lightTileLayerRef.current.setOpacity(lightOpacity);
   }, []);
-
-  // Easing function for smooth transitions
-  const easeInOutCubic = (t: number): number => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
 
   // Handle speed changes while preserving timeline position
   // const previousSpeedRef = useRef<number>(animationState.speed);
