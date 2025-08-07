@@ -35,6 +35,17 @@ const InfoButton: React.FC = () => {
           <p className="text-white/70 text-sm leading-relaxed text-center sm:text-left">
             A creative data visualization project that transforms NYC Citi Bike trip data into an artistic, spatial representation.
           </p>
+          <p className="text-white/60 text-xs mt-3 text-center">
+            ©2025 -{' '}
+            <a 
+              href="https://jooeonpark.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-white/80 hover:text-white transition-colors underline"
+            >
+              Joo Eon Park
+            </a>
+          </p>
         </div>
       )}
     </div>

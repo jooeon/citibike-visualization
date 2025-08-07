@@ -201,6 +201,21 @@ function App() {
           NYC Citi Bike Data Visualization
         </h1>
       </div>
+
+      {/* Desktop Copyright - Bottom Right */}
+      <div className="hidden sm:block absolute bottom-4 right-4 z-[1000]">
+        <div className="text-white/60 text-xs">
+          ©2025 -{' '}
+          <a 
+            href="https://jooeonpark.com/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-white/80 hover:text-white transition-colors underline"
+          >
+            Joo Eon Park
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
