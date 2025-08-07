@@ -3,7 +3,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ChronologicalRenderer } from '../utils/ChronologicalRenderer';
 import { ChronologicalDataLoader } from '../utils/dataLoader';
-import DayNightOverlay from './DayNightOverlay';
 import type { ProcessedTrip, AnimationState, Station } from '../types';
 
 interface VisualizationCanvasProps {
@@ -38,6 +37,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const darkTileLayerRef = useRef<L.TileLayer | null>(null);
+  const lightTileLayerRef = useRef<L.TileLayer | null>(null);
   const rendererRef = useRef<ChronologicalRenderer | null>(null);
   const dataLoaderRef = useRef<ChronologicalDataLoader | null>(null);
   
@@ -65,12 +66,28 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       attributionControl: false,
     });
 
-    // Dark map tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Dark map tiles (default)
+    const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20,
-    }).addTo(map);
+    });
+
+    // Light map tiles (for day time)
+    const lightTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20,
+      opacity: 0, // Start invisible
+    });
+
+    // Add both layers to map
+    darkTileLayer.addTo(map);
+    lightTileLayer.addTo(map);
+
+    // Store references
+    darkTileLayerRef.current = darkTileLayer;
+    lightTileLayerRef.current = lightTileLayer;
 
     mapRef.current = map;
 
@@ -254,6 +271,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
             onDateUpdate(dateStr);
           }
 
+          // Update map tile opacity based on time of day
+          updateMapTileOpacity(currentSimTime);
+
           // Update time display
           if (onTimeUpdate) {
             const timeStr = currentSimTime.toLocaleTimeString('en-US', {
@@ -288,6 +308,45 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
     };
   }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
+
+  // Function to update map tile opacity based on time of day
+  const updateMapTileOpacity = useCallback((currentTime: Date) => {
+    if (!lightTileLayerRef.current) return;
+
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const timeDecimal = hour + minute / 60;
+
+    // Calculate light tile opacity based on time of day
+    // 0 = full dark tiles, 1 = full light tiles
+    let lightOpacity = 0;
+
+    if (timeDecimal >= 6 && timeDecimal <= 19) {
+      // Daytime period (6 AM to 7 PM)
+      if (timeDecimal <= 7) {
+        // Sunrise transition (6-7 AM)
+        lightOpacity = (timeDecimal - 6) / 1; // 0 to 1 over 1 hour
+      } else if (timeDecimal <= 18) {
+        // Full daylight (7 AM - 6 PM)
+        lightOpacity = 1;
+      } else {
+        // Sunset transition (6-7 PM)
+        lightOpacity = 1 - ((timeDecimal - 18) / 1); // 1 to 0 over 1 hour
+      }
+    }
+    // Night time (7 PM - 6 AM): lightOpacity remains 0
+
+    // Apply smooth easing for more natural transitions
+    lightOpacity = easeInOutCubic(lightOpacity);
+
+    // Update tile layer opacity
+    lightTileLayerRef.current.setOpacity(lightOpacity);
+  }, []);
+
+  // Easing function for smooth transitions
+  const easeInOutCubic = (t: number): number => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
 
   // Handle speed changes while preserving timeline position
   // const previousSpeedRef = useRef<number>(animationState.speed);
@@ -340,6 +399,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   // Toggle map visibility
   useEffect(() => {
     if (containerRef.current) {
+      containerRef.current.style.transition = 'opacity 1000ms ease-in-out';
       containerRef.current.style.opacity = showMap ? '1' : '0';
     }
   }, [showMap]);
@@ -349,10 +409,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       {/* Map Container */}
       <div 
         ref={containerRef}
-        className="absolute inset-0 w-full h-full transition-opacity duration-300"
+        className="absolute inset-0 w-full h-full"
         style={{ 
           background: '#000000',
-          opacity: showMap ? 1 : 0
+          opacity: showMap ? 1 : 0,
+          transition: 'opacity 1000ms ease-in-out'
         }}
       />
       
@@ -364,12 +425,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           background: showMap ? 'transparent' : '#000000',
           zIndex: 600
         }}
-      />
-      
-      {/* Day/Night Cycle Overlay */}
-      <DayNightOverlay 
-        currentTime={currentSimulationTime}
-        isVisible={showMap}
       />
     </div>
   );
