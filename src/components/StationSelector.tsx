@@ -219,7 +219,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             {['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'].map(borough => {
                                 const isSelected = selectedBoroughs.has(borough);
                                 const stats = boroughStats.get(borough) || { count: 0, trips: 0 };
-                                
+
                                 return (
                                     <button
                                         key={borough}
@@ -256,27 +256,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             </button>
                         </div>
                     </div>
-
-                    {/* Station Controls */}
-                    <div className="flex items-center justify-between text-xs text-white/60">
-                        <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleSelectAllVisible}
-                                className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                            >
-                                <span className="sm:hidden">Select All</span>
-                                <span className="hidden sm:inline">Select All Visible</span>
-                            </button>
-                            <button
-                                onClick={handleSelectNoneVisible}
-                                className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                            >
-                                <span className="sm:hidden">Deselect All</span>
-                                <span className="hidden sm:inline">Deselect All Visible</span>
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Station Controls and Sorting */}
@@ -289,7 +268,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             className="hidden sm:flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             title="Sort stations"
                         >
-                            <>
                             {sortOrder === 'trips-desc' ? (
                                 <ArrowDown className="w-3 h-3" />
                             ) : sortOrder === 'trips-asc' ? (
@@ -298,12 +276,11 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 <ArrowUpDown className="w-3 h-3" />
                             )}
                             <span>
-                                {sortOrder === 'trips-desc' ? 'Trips ↓' :
-                                 sortOrder === 'trips-asc' ? 'Trips ↑' : 'Name'}
-                            </span>
-                            </>
+                            {sortOrder === 'trips-desc' ? 'Trips ↓' :
+                                sortOrder === 'trips-asc' ? 'Trips ↑' : 'Name'}
+                        </span>
                         </button>
-                        
+
                         <button
                             onClick={handleSelectAllVisible}
                             className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
@@ -318,6 +295,15 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             <span className="sm:hidden">Deselect All</span>
                             <span className="hidden sm:inline">Deselect All Visible</span>
                         </button>
+                    </div>
+                </div>
+
+                {/* Stations List */}
+                <div className="flex-1 overflow-y-auto">
+                    <div className="space-y-2">
+                        {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
+                            <div key={borough} className="space-y-2">
+                                {/* Borough Header */}
                                 <div className={`p-2 sm:p-3 rounded-lg border ${getBoroughColor(borough)}`}>
                                     <button
                                         onClick={() => handleBoroughCollapse(borough)}
@@ -344,7 +330,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                         {stationList.map((station) => {
                                             const stationIndex = getStationIndex(station);
                                             const isSelected = selectedStationIndices.has(stationIndex);
-                                            const boroughColorClass = getBoroughColor(borough);
 
                                             return (
                                                 <button
@@ -385,8 +370,8 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         <div className="text-center py-8 text-white/60">
                             <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
                             <p>
-                                {searchTerm.trim() 
-                                    ? `No stations found matching "${searchTerm}"` 
+                                {searchTerm.trim()
+                                    ? `No stations found matching "${searchTerm}"`
                                     : 'No boroughs selected'
                                 }
                             </p>
