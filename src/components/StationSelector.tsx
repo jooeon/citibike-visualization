@@ -27,10 +27,9 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                              stationTripCounts
                                                          }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedBoroughs, setSelectedBoroughs] = useState<Set<string>>(
-        new Set() // No boroughs selected by default for UI purposes
+    const [collapsedBoroughs, setCollapsedBoroughs] = useState<Set<string>>(
+        new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']) // All collapsed by default
     );
-    const [collapsedBoroughs, setCollapsedBoroughs] = useState<Set<string>>(new Set());
     const [sortOrder, setSortOrder] = useState<'name' | 'trips-asc' | 'trips-desc'>('name');
 
     const getStationIndex = (station: Station): number => {
@@ -42,23 +41,29 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     };
 
     const handleBoroughToggle = (borough: string) => {
-        setSelectedBoroughs(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(borough)) {
-                newSet.delete(borough);
+        // Get all station indices for this borough
+        const boroughStations = groupedStations.get(borough) || [];
+        const boroughStationIndices = boroughStations.map(station => getStationIndex(station));
+        
+        // Check if all stations in this borough are currently selected
+        const allBoroughStationsSelected = boroughStationIndices.every(index => 
+            selectedStationIndices.has(index)
+        );
+        
+        // If all are selected, deselect all; if any are unselected, select all
+        boroughStationIndices.forEach(stationIndex => {
+            if (allBoroughStationsSelected) {
+                // Deselect all stations in this borough
+                if (selectedStationIndices.has(stationIndex)) {
+                    onStationToggle(stationIndex);
+                }
             } else {
-                newSet.add(borough);
+                // Select all stations in this borough
+                if (!selectedStationIndices.has(stationIndex)) {
+                    onStationToggle(stationIndex);
+                }
             }
-            return newSet;
         });
-    };
-
-    const handleSelectAllBoroughs = () => {
-        setSelectedBoroughs(new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']));
-    };
-
-    const handleSelectNoBoroughs = () => {
-        setSelectedBoroughs(new Set());
     };
 
     const handleBoroughCollapse = (borough: string) => {
@@ -87,6 +92,26 @@ const StationSelector: React.FC<StationSelectorProps> = ({
         return groupStationsByBorough(stations);
     }, [stations]);
 
+    // Calculate which boroughs have selected stations
+    const boroughSelectionState = useMemo(() => {
+        const state = new Map<string, { hasSelected: boolean, allSelected: boolean, count: number }>();
+        
+        groupedStations.forEach((stationList, borough) => {
+            const boroughStationIndices = stationList.map(station => getStationIndex(station));
+            const selectedCount = boroughStationIndices.filter(index => 
+                selectedStationIndices.has(index)
+            ).length;
+            
+            state.set(borough, {
+                hasSelected: selectedCount > 0,
+                allSelected: selectedCount === boroughStationIndices.length,
+                count: selectedCount
+            });
+        });
+        
+        return state;
+    }, [groupedStations, selectedStationIndices]);
+
     const boroughStats = useMemo(() => {
         return getBoroughStats(stations, stationTripCounts, allStations);
     }, [stations, stationTripCounts, allStations]);
@@ -95,11 +120,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
         const filtered = new Map<string, Station[]>();
         
         groupedStations.forEach((stationList, borough) => {
-            // Filter by borough selection
-            if (!selectedBoroughs.has(borough)) {
-                return;
-            }
-
             // Filter by search term
             let filteredStations = stationList;
             if (searchTerm.trim()) {
@@ -139,7 +159,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
         });
         
         return filtered;
-    }, [groupedStations, selectedBoroughs, searchTerm, selectedStationIndices, sortOrder, stationTripCounts, allStations]);
+    }, [groupedStations, searchTerm, selectedStationIndices, sortOrder, stationTripCounts, allStations]);
 
     const selectedCount = stations.filter(station =>
         selectedStationIndices.has(getStationIndex(station))
@@ -148,11 +168,19 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     // Calculate visible stations after all filters are applied
     const visibleStations = useMemo(() => {
         const visible: Station[] = [];
-        filteredGroupedStations.forEach((stationList) => {
-            visible.push(...stationList);
+        groupedStations.forEach((stationList) => {
+            if (searchTerm.trim()) {
+                const term = searchTerm.toLowerCase();
+                const filtered = stationList.filter(station =>
+                    station.name.toLowerCase().includes(term)
+                );
+                visible.push(...filtered);
+            } else {
+                visible.push(...stationList);
+            }
         });
         return visible;
-    }, [filteredGroupedStations]);
+    }, [groupedStations, searchTerm]);
 
     const handleSelectAllVisible = () => {
         visibleStations.forEach(station => {
@@ -217,22 +245,27 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         </div>
                         <div className="flex flex-wrap gap-2 mb-2">
                             {['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'].map(borough => {
-                                const isSelected = selectedBoroughs.has(borough);
+                                const selectionState = boroughSelectionState.get(borough);
+                                const isFullySelected = selectionState?.allSelected || false;
+                                const hasSelected = selectionState?.hasSelected || false;
+                                const selectedCount = selectionState?.count || 0;
                                 const stats = boroughStats.get(borough) || { count: 0, trips: 0 };
 
                                 return (
                                     <button
                                         key={borough}
                                         onClick={() => handleBoroughToggle(borough)}
-                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 ${
-                                            isSelected
-                                                ? `${getBoroughColor(borough)} text-white`
-                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 hover:bg-white/10 ${
+                                            isFullySelected
+                                                ? `${getBoroughColor(borough)} text-white border-opacity-60`
+                                                : hasSelected
+                                                ? `${getBoroughColor(borough)} text-white/90 border-opacity-40 bg-opacity-60`
+                                                : 'bg-white/5 border-white/10 text-white/60'
                                         }`}
                                     >
                                         <div className="font-medium text-center text-xs sm:text-sm leading-tight">{borough}</div>
                                         <div className="text-xs opacity-80 text-center leading-tight">
-                                            {stats.count} stations
+                                            {selectedCount}/{stats.count} stations
                                         </div>
                                         <div className="text-xs opacity-80 text-center leading-tight hidden sm:block">
                                             {stats.trips.toLocaleString()} trips
@@ -243,16 +276,16 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         </div>
                         <div className="flex gap-2">
                             <button
-                                onClick={handleSelectAllBoroughs}
+                                onClick={onSelectAll}
                                 className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                All Boroughs
+                                Select All
                             </button>
                             <button
-                                onClick={handleSelectNoBoroughs}
+                                onClick={onSelectNone}
                                 className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                No Boroughs
+                                Deselect All
                             </button>
                         </div>
                     </div>
@@ -301,13 +334,56 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 {/* Stations List */}
                 <div className="flex-1 overflow-y-auto">
                     <div className="space-y-2">
-                        {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
+                        {Array.from(groupedStations.entries()).map(([borough, stationList]) => {
+                            const selectionState = boroughSelectionState.get(borough);
+                            const hasSelected = selectionState?.hasSelected || false;
+                            const selectedCount = selectionState?.count || 0;
+                            
+                            // Filter stations by search term
+                            let displayedStations = stationList;
+                            if (searchTerm.trim()) {
+                                const term = searchTerm.toLowerCase();
+                                displayedStations = stationList.filter(station =>
+                                    station.name.toLowerCase().includes(term)
+                                );
+                            }
+                            
+                            // Sort stations
+                            if (sortOrder === 'trips-desc') {
+                                displayedStations.sort((a, b) => {
+                                    const aIndex = getStationIndex(a);
+                                    const bIndex = getStationIndex(b);
+                                    const aTrips = getStationTripCount(aIndex);
+                                    const bTrips = getStationTripCount(bIndex);
+                                    return bTrips - aTrips;
+                                });
+                            } else if (sortOrder === 'trips-asc') {
+                                displayedStations.sort((a, b) => {
+                                    const aIndex = getStationIndex(a);
+                                    const bIndex = getStationIndex(b);
+                                    const aTrips = getStationTripCount(aIndex);
+                                    const bTrips = getStationTripCount(bIndex);
+                                    return aTrips - bTrips;
+                                });
+                            } else {
+                                displayedStations.sort((a, b) => a.name.localeCompare(b.name));
+                            }
+                            
+                            return (
                             <div key={borough} className="space-y-2">
                                 {/* Borough Header */}
-                                <div className={`p-2 sm:p-3 rounded-lg border ${getBoroughColor(borough)}`}>
+                                <div className={`p-2 sm:p-3 rounded-lg border transition-all duration-200 ${
+                                    hasSelected 
+                                        ? getBoroughColor(borough) 
+                                        : 'bg-white/5 border-white/10'
+                                }`}>
                                     <button
                                         onClick={() => handleBoroughCollapse(borough)}
-                                        className="w-full flex items-center justify-between text-white hover:bg-white/10 rounded transition-colors p-1 -m-1"
+                                        className={`w-full flex items-center justify-between rounded transition-colors p-1 -m-1 ${
+                                            hasSelected 
+                                                ? 'text-white hover:bg-white/10' 
+                                                : 'text-white/60 hover:bg-white/5'
+                                        }`}
                                     >
                                         <div className="flex items-center gap-2">
                                             {collapsedBoroughs.has(borough) ? (
@@ -316,10 +392,10 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                 <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                                             )}
                                             <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            <span className="font-medium text-xs sm:text-sm text-white">{borough}</span>
+                                            <span className="font-medium text-xs sm:text-sm">{borough}</span>
                                         </div>
                                         <div className="text-xs sm:text-sm opacity-80">
-                                            {stationList.length} stations
+                                            {selectedCount}/{stationList.length} stations
                                         </div>
                                     </button>
                                 </div>
@@ -327,7 +403,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 {/* Stations in Borough */}
                                 {!collapsedBoroughs.has(borough) && (
                                     <div className="space-y-1 ml-2 sm:ml-4">
-                                        {stationList.map((station) => {
+                                        {displayedStations.map((station) => {
                                             const stationIndex = getStationIndex(station);
                                             const isSelected = selectedStationIndices.has(stationIndex);
 
@@ -363,17 +439,14 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        )})}
                     </div>
 
-                    {filteredGroupedStations.size === 0 && (
+                    {searchTerm.trim() && visibleStations.length === 0 && (
                         <div className="text-center py-8 text-white/60">
                             <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
                             <p>
-                                {searchTerm.trim()
-                                    ? `No stations found matching "${searchTerm}"`
-                                    : 'No boroughs selected'
-                                }
+                                No stations found matching "{searchTerm}"
                             </p>
                         </div>
                     )}
