@@ -196,14 +196,14 @@ function App() {
       <InfoButton />
 
       {/* Mobile Title - Bottom Left */}
-      <div className="absolute bottom-2 left-2 z-[1000] sm:hidden">
+      <div className="fixed bottom-2 left-2 z-[1000] sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <h1 className="text-white/90 font-medium text-xs tracking-wide">
           NYC Citi Bike Data Visualization
         </h1>
       </div>
 
       {/* Desktop Copyright - Bottom Right */}
-      <div className="hidden sm:block absolute bottom-4 right-4 z-[1000]">
+      <div className="hidden sm:block fixed bottom-4 right-4 z-[1000]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="text-white/60 text-xs font-bold">
           &copy;{new Date().getFullYear()} -{' '}
           <a 
