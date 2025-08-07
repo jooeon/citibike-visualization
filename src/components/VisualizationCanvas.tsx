@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ChronologicalRenderer } from '../utils/ChronologicalRenderer';
@@ -37,6 +37,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const darkTileLayerRef = useRef<L.TileLayer | null>(null);
+  const lightTileLayerRef = useRef<L.TileLayer | null>(null);
   const rendererRef = useRef<ChronologicalRenderer | null>(null);
   const dataLoaderRef = useRef<ChronologicalDataLoader | null>(null);
   
@@ -45,6 +47,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   const animationFrameRef = useRef<number>();
   const updateIntervalRef = useRef<number>();
   const allTripsRef = useRef<ProcessedTrip[]>([]);
+  const [currentSimulationTime, setCurrentSimulationTime] = useState<Date>(new Date());
 
   // Initialize map, canvas, and data loader
   useEffect(() => {
@@ -63,12 +66,28 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       attributionControl: false,
     });
 
-    // Dark map tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Dark map tiles (default)
+    const darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20,
-    }).addTo(map);
+    });
+
+    // Light map tiles (for day time)
+    const lightTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20,
+      opacity: 0, // Start invisible
+    });
+
+    // Add both layers to map
+    darkTileLayer.addTo(map);
+    lightTileLayer.addTo(map);
+
+    // Store references
+    darkTileLayerRef.current = darkTileLayer;
+    lightTileLayerRef.current = lightTileLayer;
 
     mapRef.current = map;
 
@@ -239,21 +258,28 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         if (rendererRef.current) {
           const { currentSimTime, tripsStarted } = rendererRef.current.updateSimulation(animationState.speed);
 
+          // Update current simulation time for day/night overlay
+          setCurrentSimulationTime(currentSimTime);
+
           // Update date display when day changes
           if (onDateUpdate && allTripsRef.current.length > 0) {
+            const dayName = currentSimTime.toLocaleDateString('en-US', { weekday: 'short' });
             const month = String(currentSimTime.getMonth() + 1).padStart(2, '0');
             const day = String(currentSimTime.getDate()).padStart(2, '0');
             const year = currentSimTime.getFullYear();
-            const dateStr = `${month}/${day}/${year}`;
+            const dateStr = `${dayName} ${month}/${day}/${year}`;
             onDateUpdate(dateStr);
           }
+
+          // Update map tile opacity based on time of day
+          updateMapTileOpacity(currentSimTime);
 
           // Update time display
           if (onTimeUpdate) {
             const timeStr = currentSimTime.toLocaleTimeString('en-US', {
-              hour: '2-digit',
+              hour: 'numeric',
               minute: '2-digit',
-              hour12: false
+              hour12: true
             });
             onTimeUpdate(timeStr);
           }
@@ -283,6 +309,44 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     };
   }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
 
+  // Function to update map tile opacity based on time of day
+  const updateMapTileOpacity = useCallback((currentTime: Date) => {
+    if (!lightTileLayerRef.current) return;
+
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const timeDecimal = hour + minute / 60;
+
+    // Calculate light tile opacity based on time of day
+    // 0 = full dark tiles, 1 = full light tiles
+    let lightOpacity = 0;
+
+    if (timeDecimal >= 4 && timeDecimal <= 24) {
+      // Extended daytime period (4 AM to 12 AM)
+      if (timeDecimal <= 11) {
+        // Very gradual sunrise transition (4-11 AM) - 7 hours
+        lightOpacity = (timeDecimal - 4) / 7; // 0 to 1 over 7 hours
+      } else if (timeDecimal <= 17) {
+        // Full daylight (11 AM - 5 PM)
+        lightOpacity = 1;
+      } else {
+        // Very gradual sunset transition (5 PM - 12 AM) - 7 hours
+        lightOpacity = 1 - ((timeDecimal - 17) / 7); // 1 to 0 over 7 hours
+      }
+    }
+
+    // Apply smooth easing for more natural transitions
+    lightOpacity = easeInOutCubic(lightOpacity);
+
+    // Update tile layer opacity
+    lightTileLayerRef.current.setOpacity(lightOpacity);
+  }, []);
+
+  // Easing function for smooth transitions
+  const easeInOutCubic = (t: number): number => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
+
   // Handle speed changes while preserving timeline position
   // const previousSpeedRef = useRef<number>(animationState.speed);
   // useEffect(() => {
@@ -302,9 +366,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       if (allTripsRef.current.length > 0 && onTimeUpdate) {
         const firstTripTime = allTripsRef.current[0].startTime;
         const timeStr = firstTripTime.toLocaleTimeString('en-US', {
-          hour: '2-digit',
+          hour: 'numeric',
           minute: '2-digit',
-          hour12: false
+          hour12: true
         });
         onTimeUpdate(timeStr);
       }
@@ -334,7 +398,15 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   // Toggle map visibility
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.style.opacity = showMap ? '1' : '0';
+      // Set transition property
+      containerRef.current.style.transition = 'opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1)';
+      
+      // Use requestAnimationFrame to ensure transition applies
+      requestAnimationFrame(() => {
+        if (containerRef.current) {
+          containerRef.current.style.opacity = showMap ? '1' : '0';
+        }
+      });
     }
   }, [showMap]);
 
@@ -343,7 +415,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       {/* Map Container */}
       <div 
         ref={containerRef}
-        className="absolute inset-0 w-full h-full transition-opacity duration-300"
+        className="absolute inset-0 w-full h-full"
         style={{ 
           background: '#000000',
           opacity: showMap ? 1 : 0
@@ -356,7 +428,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ 
           background: showMap ? 'transparent' : '#000000',
-          zIndex: 400
+          zIndex: 600
         }}
       />
     </div>

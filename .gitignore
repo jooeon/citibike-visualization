@@ -23,3 +23,16 @@ dist-ssr
 *.sln
 *.sw?
 .env
+/public/data/citibike_2025-02-02.json
+/public/data/citibike_2025-02-03.json
+/public/data/citibike_2025-02-04.json
+/public/data/citibike_2025-02-05.json
+/public/data/citibike_2025-02-06.json
+/public/data/citibike_2025-02-07.json
+/public/data/citibike_2025-02-08.json
+/public/data/citibike_2025-02-09.json
+/public/data/citibike_2025-02-10.json
+/public/data/citibike_2025-02-11.json
+/public/data/citibike_2025-02-12.json
+/public/data/citibike_2025-02-13.json
+/public/data/citibike_2025-02-14.json
