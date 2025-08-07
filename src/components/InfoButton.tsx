@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Info, X } from 'lucide-react';
 
 const InfoButton: React.FC = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   return (
     <div className="fixed bottom-2 right-2 sm:bottom-4 sm:left-4 z-[1000]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>

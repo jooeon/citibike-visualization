@@ -28,7 +28,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                          }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBoroughs, setSelectedBoroughs] = useState<Set<string>>(
-        new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'])
+        new Set() // No boroughs selected by default for UI purposes
     );
     const [collapsedBoroughs, setCollapsedBoroughs] = useState<Set<string>>(new Set());
     const [sortOrder, setSortOrder] = useState<'name' | 'trips-asc' | 'trips-desc'>('name');

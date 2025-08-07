@@ -203,7 +203,7 @@ function App() {
       </div>
 
       {/* Desktop Copyright - Bottom Right */}
-      <div className="hidden sm:block fixed bottom-4 right-4 z-[1000]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      {/* <div className="hidden sm:block fixed bottom-4 right-4 z-[1000]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="text-white/60 text-xs font-bold">
           &copy;{new Date().getFullYear()} -{' '}
           <a 
@@ -215,7 +215,7 @@ function App() {
             Joo Eon Park
           </a>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
