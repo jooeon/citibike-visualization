@@ -199,7 +199,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     >
                                         <div className="font-medium text-center text-xs leading-tight">{borough}</div>
                                         <div className="text-xs opacity-80 text-center leading-tight">
-                                            {stats.count} • {stats.trips.toLocaleString()}
+                                            {stats.count} stations
                                         </div>
                                     </button>
                                 );
@@ -222,20 +222,20 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                     </div>
 
                     {/* Station Controls */}
-                    <div className="flex items-center justify-between text-sm text-white/60">
-                        <span>{selectedCount} of {stations.length} stations selected • {visibleStations.length} visible</span>
+                    <div className="flex items-center justify-between text-xs text-white/60">
+                        <span>{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={handleSelectAllVisible}
-                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
+                                className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                Select All Visible
+                                Select All
                             </button>
                             <button
                                 onClick={handleSelectNoneVisible}
-                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
+                                className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                Deselect All Visible
+                                Deselect All
                             </button>
                         </div>
                     </div>
@@ -326,10 +326,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="mt-3 pt-3 border-t border-white/10 flex justify-between items-center sticky bottom-0 bg-black/80 backdrop-blur-md">
-                    <div className="text-white/60 text-xs">
-                        Filters will be applied while continuing animation
-                    </div>
+                <div className="mt-3 pt-3 border-t border-white/10 flex justify-end sticky bottom-0 bg-black/80 backdrop-blur-md">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors flex items-center gap-2"
