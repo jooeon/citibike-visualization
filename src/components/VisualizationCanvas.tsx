@@ -326,27 +326,25 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       if (timeDecimal <= 10) {
         // Very gradual sunrise transition (5-10 AM) - 5 hours
         lightOpacity = (timeDecimal - 5) / 5; // 0 to 1 over 5 hours
-      } else if (timeDecimal <= 17) {
+        // Ease-in-out function: 3t² - 2t³
+        lightOpacity = progress * progress * (3 - 2 * progress);
         // Full daylight (10 AM - 5 PM)
         lightOpacity = 1;
       } else {
         // Very gradual sunset transition (5-10 PM) - 5 hours
         lightOpacity = 1 - ((timeDecimal - 17) / 5); // 1 to 0 over 5 hours
-      }
+        // Ease-in-out function for fade out: 1 - (3t² - 2t³)
+        const easedProgress = progress * progress * (3 - 2 * progress);
+        lightOpacity = 1 - easedProgress;
+          }
     }
     // Night time (10 PM - 5 AM): lightOpacity remains 0
 
     // Apply smooth easing for more natural transitions
-    lightOpacity = easeInOutCubic(lightOpacity);
 
     // Update tile layer opacity
     lightTileLayerRef.current.setOpacity(lightOpacity);
   }, []);
-
-  // Easing function for smooth transitions
-  const easeInOutCubic = (t: number): number => {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  };
 
   // Handle speed changes while preserving timeline position
   // const previousSpeedRef = useRef<number>(animationState.speed);
