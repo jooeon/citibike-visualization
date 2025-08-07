@@ -336,6 +336,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         // Ease-in-out function for fade out: 1 - (3t² - 2t³)
         const easedProgress = progress * progress * (3 - 2 * progress);
         lightOpacity = 1 - easedProgress;
+          }
     }
     // Night time (10 PM - 5 AM): lightOpacity remains 0
 
