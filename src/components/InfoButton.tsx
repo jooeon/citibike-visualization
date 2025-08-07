@@ -19,7 +19,7 @@ const InfoButton: React.FC = () => {
 
       {/* Expanded Info Panel */}
       {isExpanded && (
-        <div className="fixed inset-4 sm:relative sm:inset-auto bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 max-w-sm sm:max-w-sm flex flex-col justify-center sm:block">
+        <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 sm:relative sm:inset-auto sm:translate-y-0 bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 max-w-sm sm:max-w-sm w-auto h-auto">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <Info className="w-4 h-4 text-white/80 flex-shrink-0 mt-0.5" />
