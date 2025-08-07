@@ -121,6 +121,9 @@ function App() {
     setStationTripCounts(counts);
   }, []);
 
+  const handleTimeJump = useCallback((hours: number) => {
+  }
+  )
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -137,10 +140,16 @@ function App() {
         onStationTripCountsUpdate={handleStationTripCountsUpdate}
         showMap={showMap}
         selectedStationIndices={selectedStationIndices}
+        onTimeJump={handleTimeJump}
       />
 
       {/* Digital Clock */}
-      <DigitalClock currentTime={currentTime} currentDate={currentDate} />
+      <DigitalClock 
+        currentTime={currentTime} 
+        currentDate={currentDate} 
+        onTimeJump={handleTimeJump}
+        isPlaying={animationState.isPlaying}
+      />
 
       {/* Minimal Controls */}
       <MinimalControls

@@ -18,6 +18,7 @@ interface VisualizationCanvasProps {
   onStationTripCountsUpdate?: (counts: Map<number, number>) => void;
   showMap: boolean;
   selectedStationIndices: Set<number>;
+  onTimeJump?: (hours: number) => void;
 }
 
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
@@ -32,7 +33,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onFilteredTripsUpdate,
   onStationTripCountsUpdate,
   showMap,
-  selectedStationIndices
+  selectedStationIndices,
+  onTimeJump
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -376,6 +378,57 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     }
   }, [animationState.tripCounter, animationState.isPlaying, onTimeUpdate]);
 
+  // Handle time jumps
+  useEffect(() => {
+    if (!onTimeJump) return;
+
+    const handleTimeJumpInternal = (hours: number) => {
+      if (!rendererRef.current) return;
+      
+      // Jump the simulation time by the specified hours
+      rendererRef.current.jumpTime(hours);
+      
+      // Update displays
+      const stats = rendererRef.current.getStats();
+      const { currentSimTime } = rendererRef.current.updateSimulation(animationState.speed);
+      
+      // Update time display
+      if (onTimeUpdate) {
+        const timeStr = currentSimTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        onTimeUpdate(timeStr);
+      }
+      
+      // Update date display
+      if (onDateUpdate) {
+        const dayName = currentSimTime.toLocaleDateString('en-US', { weekday: 'short' });
+        const month = String(currentSimTime.getMonth() + 1).padStart(2, '0');
+        const day = String(currentSimTime.getDate()).padStart(2, '0');
+        const year = currentSimTime.getFullYear();
+        const dateStr = `${dayName} ${month}/${day}/${year}`;
+        onDateUpdate(dateStr);
+      }
+      
+      // Update trip counter
+      if (onTripCountUpdate) {
+        onTripCountUpdate(stats.totalTripsStarted);
+      }
+      
+      // Update map tile opacity
+      updateMapTileOpacity(currentSimTime);
+    };
+
+    // Store the function reference so we can call it
+    (window as any).handleTimeJump = handleTimeJumpInternal;
+    
+    return () => {
+      delete (window as any).handleTimeJump;
+    };
+  }
+  )
   // Animation loop for rendering
   useEffect(() => {
     if (!rendererRef.current) return;
