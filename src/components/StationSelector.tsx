@@ -250,17 +250,23 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 const hasSelected = selectionState?.hasSelected || false;
                                 const selectedCount = selectionState?.count || 0;
                                 const stats = boroughStats.get(borough) || { count: 0, trips: 0 };
+                                const isStatenIsland = borough === 'Staten Island';
+                                const isDisabled = isStatenIsland && stats.count === 0;
 
                                 return (
                                     <button
                                         key={borough}
-                                        onClick={() => handleBoroughToggle(borough)}
-                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 hover:bg-white/10 ${
-                                            isFullySelected
-                                                ? `${getBoroughColor(borough)} text-white border-opacity-60`
+                                        onClick={() => !isDisabled && handleBoroughToggle(borough)}
+                                        disabled={isDisabled}
+                                        title={isDisabled ? 'No Staten Island stations available in current dataset' : undefined}
+                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 relative group ${
+                                            isDisabled
+                                                ? 'bg-gray-800/20 border-gray-600/20 text-gray-500 cursor-not-allowed'
+                                                : isFullySelected
+                                                ? `${getBoroughColor(borough)} text-white border-opacity-60 hover:bg-white/10`
                                                 : hasSelected
-                                                ? `${getBoroughColor(borough)} text-white/90 border-opacity-40 bg-opacity-60`
-                                                : 'bg-white/5 border-white/10 text-white/60'
+                                                ? `${getBoroughColor(borough)} text-white/90 border-opacity-40 bg-opacity-60 hover:bg-white/10`
+                                                : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                                         }`}
                                     >
                                         <div className="font-medium text-center text-xs sm:text-sm leading-tight">{borough}</div>
@@ -270,6 +276,13 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                         <div className="text-xs opacity-80 text-center leading-tight hidden sm:block">
                                             {stats.trips.toLocaleString()} trips
                                         </div>
+                                        
+                                        {/* Tooltip for disabled Staten Island */}
+                                        {isDisabled && (
+                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10">
+                                                No Staten Island stations available in current dataset
+                                            </div>
+                                        )}
                                     </button>
                                 );
                             })}
@@ -293,7 +306,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                 {/* Station Controls and Sorting */}
                 <div className="flex items-center justify-between text-xs text-white/60 mb-3">
-                    <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
+                    <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected</span>
                     <div className="flex gap-2 items-center">
                         {/* Desktop-only sorting */}
                         <button
@@ -314,7 +327,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         </span>
                         </button>
 
-                        <button
+                        {/* <button
                             onClick={handleSelectAllVisible}
                             className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                         >
@@ -327,7 +340,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         >
                             <span className="sm:hidden">Deselect All</span>
                             <span className="hidden sm:inline">Deselect All Visible</span>
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

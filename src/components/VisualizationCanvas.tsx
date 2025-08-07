@@ -241,19 +241,21 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
 
           // Update date display when day changes
           if (onDateUpdate && allTripsRef.current.length > 0) {
-            const month = String(currentSimTime.getMonth() + 1).padStart(2, '0');
-            const day = String(currentSimTime.getDate()).padStart(2, '0');
-            const year = currentSimTime.getFullYear();
-            const dateStr = `${month}/${day}/${year}`;
+            const dayName = currentSimTime.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayName = firstTripDate.toLocaleDateString('en-US', { weekday: 'short' });
+            const month = String(firstTripDate.getMonth() + 1).padStart(2, '0');
+            const day = String(firstTripDate.getDate()).padStart(2, '0');
+            const year = firstTripDate.getFullYear();
+            const dateStr = `${dayName} ${month}/${day}/${year}`;
             onDateUpdate(dateStr);
           }
 
           // Update time display
           if (onTimeUpdate) {
             const timeStr = currentSimTime.toLocaleTimeString('en-US', {
-              hour: '2-digit',
+              hour: 'numeric',
               minute: '2-digit',
-              hour12: false
+              hour12: true
             });
             onTimeUpdate(timeStr);
           }
@@ -302,9 +304,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       if (allTripsRef.current.length > 0 && onTimeUpdate) {
         const firstTripTime = allTripsRef.current[0].startTime;
         const timeStr = firstTripTime.toLocaleTimeString('en-US', {
-          hour: '2-digit',
+          hour: 'numeric',
           minute: '2-digit',
-          hour12: false
+          hour12: true
         });
         onTimeUpdate(timeStr);
       }
