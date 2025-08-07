@@ -95,6 +95,13 @@ function isInManhattan(lat: number, lng: number): boolean {
     return false;
   }
   
+  // Manhattan is west of the East River
+  // The East River roughly follows longitude -73.94 to -73.97 depending on location
+  // Anything east of -73.94 is likely Brooklyn or Queens
+  if (lng > -73.9400) {
+    return false; // East of East River - likely Brooklyn/Queens
+  }
+  
   // Additional checks for Manhattan-specific areas
   // Exclude Roosevelt Island (which is technically Manhattan but often grouped separately)
   if (lng > -73.9200 && lat > 40.7500 && lat < 40.7700) {
@@ -113,9 +120,22 @@ function isInBrooklyn(lat: number, lng: number): boolean {
     return false;
   }
   
-  // Exclude areas that might overlap with Queens
-  // Brooklyn-Queens boundary is roughly along the Jackie Robinson Parkway
-  if (lng > -73.8800 && lat > 40.6800) {
+  // Brooklyn includes areas east of Manhattan (east of East River)
+  // Williamsburg, DUMBO, etc. are in Brooklyn and have lng > -73.94
+  
+  // Northern Brooklyn boundary with Queens
+  // The boundary roughly follows Newtown Creek and the BQE
+  if (lat > 40.7200 && lng > -73.9000) {
+    // This could be Queens - check more precisely
+    // Areas north of Greenpoint (lat > 40.73) and east of lng -73.90 are likely Queens
+    if (lat > 40.7300 && lng > -73.9000) {
+      return false; // Likely Queens
+    }
+  }
+  
+  // Eastern Brooklyn boundary with Queens
+  // Roughly along the Jackie Robinson Parkway and Highland Park
+  if (lng > -73.8500 && lat > 40.6700) {
     return false; // Likely Queens
   }
   

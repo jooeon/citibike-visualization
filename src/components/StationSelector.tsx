@@ -284,14 +284,14 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                 onClick={() => onStationToggle(stationIndex)}
                                                 className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
                                                     isSelected
-                                                        ? `${getBoroughColor(borough)} text-white`
+                                                        ? `${getBoroughColor(station.borough || borough)} text-white`
                                                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                             >
                                                 {isSelected ? (
                                                     <CheckSquare className="w-4 h-4 text-white flex-shrink-0" />
                                                 ) : (
-                                                    <Square className="w-4 h-4 text-white/40 flex-shrink-0" />
+                                                    <Square className="w-4 h-4 text-white flex-shrink-0" />
                                                 )}
 
                                                 <div className="flex-1 min-w-0">
