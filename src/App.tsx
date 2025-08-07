@@ -4,6 +4,7 @@ import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
+import InfoButton from './components/InfoButton';
 import type { AnimationState, Station, ProcessedTrip } from './types';
 
 function App() {
@@ -190,6 +191,9 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Info Button */}
+      <InfoButton />
     </div>
   );
 }

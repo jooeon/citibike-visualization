@@ -159,9 +159,9 @@ const StationSelector: React.FC<StationSelectorProps> = ({
             />
 
             {/* Modal content */}
-            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-4 max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <MapPin className="w-5 h-5 text-white/80" />
                         <h2 className="text-white text-lg font-semibold">Filter by Starting Stations</h2>
@@ -175,7 +175,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Stats and Controls */}
-                <div className="space-y-4 mb-4">
+                <div className="space-y-3 mb-3">
                     {/* Borough Filter */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -191,15 +191,18 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     <button
                                         key={borough}
                                         onClick={() => handleBoroughToggle(borough)}
-                                        className={`px-3 py-2 rounded-lg border text-xs transition-all duration-200 ${
+                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 ${
                                             isSelected
                                                 ? `${getBoroughColor(borough)} text-white`
                                                 : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                                         }`}
                                     >
-                                        <div className="font-medium">{borough}</div>
-                                        <div className="text-xs opacity-80">
-                                            {stats.count} stations • {stats.trips.toLocaleString()} trips
+                                        <div className="font-medium text-center text-xs sm:text-sm leading-tight">{borough}</div>
+                                        <div className="text-xs opacity-80 text-center leading-tight">
+                                            {stats.count} stations
+                                        </div>
+                                        <div className="text-xs opacity-80 text-center leading-tight hidden sm:block">
+                                            {stats.trips.toLocaleString()} trips
                                         </div>
                                     </button>
                                 );
@@ -222,34 +225,34 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                     </div>
 
                     {/* Station Controls */}
-                    <div className="flex items-center justify-between text-sm text-white/60">
-                        <span>{selectedCount} of {stations.length} stations selected • {visibleStations.length} visible</span>
+                    <div className="flex items-center justify-between text-xs text-white/60">
+                        <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
                         <div className="flex gap-2">
                             <button
                                 onClick={handleSelectAllVisible}
-                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
+                                className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                Select All Visible
+                                Select All
                             </button>
                             <button
                                 onClick={handleSelectNoneVisible}
-                                className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors"
+                                className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                Deselect All Visible
+                                Deselect All
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Search */}
-                <div className="relative mb-4">
+                <div className="relative mb-3">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
                         type="text"
                         placeholder="Search stations..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
+                        className="w-full pl-10 pr-4 py-1 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
                     />
                 </div>
 
@@ -259,20 +262,20 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
                             <div key={borough} className="space-y-2">
                                 {/* Borough Header */}
-                                <div className={`p-3 rounded-lg border ${getBoroughColor(borough)}`}>
+                                <div className={`p-2 sm:p-3 rounded-lg border ${getBoroughColor(borough)}`}>
                                     <div className="flex items-center justify-between text-white">
                                         <div className="flex items-center gap-2">
-                                            <Building2 className="w-4 h-4" />
-                                            <span className="font-medium text-sm text-white">{borough}</span>
+                                            <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            <span className="font-medium text-xs sm:text-sm text-white">{borough}</span>
                                         </div>
-                                        <div className="text-xs opacity-80">
+                                        <div className="text-xs sm:text-sm opacity-80">
                                             {stationList.length} stations
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Stations in Borough */}
-                                <div className="space-y-1 ml-4">
+                                <div className="space-y-1 ml-2 sm:ml-4">
                                     {stationList.map((station) => {
                                         const stationIndex = getStationIndex(station);
                                         const isSelected = selectedStationIndices.has(stationIndex);
@@ -282,23 +285,25 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                             <button
                                                 key={`${station.id}-${stationIndex}`}
                                                 onClick={() => onStationToggle(stationIndex)}
-                                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-center gap-3 ${
+                                                className={`w-full text-left p-2 sm:p-3 rounded-lg border transition-all duration-200 flex items-start gap-2 sm:gap-3 ${
                                                     isSelected
                                                         ? `${getBoroughColor(station.borough || borough)} text-white`
                                                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                             >
-                                                {isSelected ? (
-                                                    <CheckSquare className="w-4 h-4 text-white flex-shrink-0" />
-                                                ) : (
-                                                    <Square className="w-4 h-4 text-white flex-shrink-0" />
-                                                )}
+                                                <div className="flex-shrink-0 mt-0.5 sm:mt-1">
+                                                    {isSelected ? (
+                                                        <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                                    ) : (
+                                                        <Square className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                                    )}
+                                                </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-sm truncate">
+                                                    <div className="font-medium text-xs sm:text-sm truncate">
                                                         {station.name}
                                                     </div>
-                                                    <div className="text-xs text-white/60 mt-1">
+                                                    <div className="text-xs text-white/60 mt-0.5 sm:mt-1">
                                                         {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
                                                     </div>
                                                 </div>
@@ -324,10 +329,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-                    <div className="text-white/60 text-xs">
-                        Filters will be applied while continuing animation
-                    </div>
+                <div className="mt-3 pt-3 border-t border-white/10 flex justify-end">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors flex items-center gap-2"
