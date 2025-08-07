@@ -142,9 +142,8 @@ function App() {
   }, []);
 
   const handleDateSelect = useCallback((dateStr: string) => {
-    // Convert MM/DD/YYYY format to YYYY-MM-DD for comparison
-    const [month, day, year] = dateStr.split('/');
-    const targetDateKey = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    // dateStr is already in YYYY-MM-DD format from DateSelector
+    const targetDateKey = dateStr;
     
     // Find the first trip on the selected date
     const targetTrip = allTrips.find(trip => {
@@ -163,7 +162,7 @@ function App() {
     }
     
     setShowDateSelector(false);
-  }, [allTrips]);
+  }, [allTrips, getCurrentSimulationTime, handleTimeJump]);
 
   const getCurrentSimulationTime = useCallback((): number => {
     if (allTrips.length === 0) return Date.now();
