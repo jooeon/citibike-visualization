@@ -33,7 +33,7 @@ const InfoButton: React.FC = () => {
                 <X className="w-4 h-4"/>
               </button>
             </div>
-            <p className="text-white/70 text-sm leading-relaxed text-center sm:text-left">
+            <p className="text-white/70 text-sm leading-relaxed text-left">
               A creative data visualization project that transforms NYC Citi Bike trip data into an artistic, spatial
               representation.
             </p>
