@@ -4,42 +4,42 @@ import type { Station } from '../types';
 const PRECISE_BOROUGH_BOUNDARIES = {
   Manhattan: {
     bounds: {
-      minLat: 40.7000,  // Battery Park area
+      minLat: 40.6990,  // Battery Park area (more inclusive)
       maxLat: 40.8820,  // Inwood
-      minLng: -74.0259, // West side (Hudson River)
-      maxLng: -73.9070  // East side (East River, excluding Roosevelt Island)
+      minLng: -74.0280, // West side (Hudson River, more inclusive)
+      maxLng: -73.9070  // East side (East River)
     }
   },
   Brooklyn: {
     bounds: {
-      minLat: 40.5700,  // Southern Brooklyn (Coney Island area)
-      maxLat: 40.7390,  // Northern Brooklyn (Greenpoint area)
-      minLng: -74.0420, // Western Brooklyn (Bay Ridge)
-      maxLng: -73.8330  // Eastern Brooklyn (East New York)
+      minLat: 40.5680,  // Southern Brooklyn (Coney Island area)
+      maxLat: 40.7400,  // Northern Brooklyn (Greenpoint area)
+      minLng: -74.0450, // Western Brooklyn (Bay Ridge/Sunset Park)
+      maxLng: -73.8300  // Eastern Brooklyn (East New York)
     }
   },
   Queens: {
     bounds: {
-      minLat: 40.5400,  // Southern Queens (JFK area)
-      maxLat: 40.8000,  // Northern Queens (Flushing area)
-      minLng: -73.9620, // Western Queens (Long Island City)
-      maxLng: -73.7000  // Eastern Queens (Nassau County border)
+      minLat: 40.5420,  // Southern Queens (JFK/Rockaway area)
+      maxLat: 40.8030,  // Northern Queens (Flushing/Whitestone)
+      minLng: -73.9650, // Western Queens (Long Island City)
+      maxLng: -73.6990  // Eastern Queens (Nassau County border)
     }
   },
   Bronx: {
     bounds: {
-      minLat: 40.7850,  // Southern Bronx (near Yankee Stadium)
-      maxLat: 40.9200,  // Northern Bronx (Westchester border)
-      minLng: -73.9330, // Western Bronx (Harlem River)
-      maxLng: -73.7650  // Eastern Bronx (Bronx River/Westchester)
+      minLat: 40.7900,  // Southern Bronx (Mott Haven area)
+      maxLat: 40.9180,  // Northern Bronx (Westchester border)
+      minLng: -73.9350, // Western Bronx (Harlem River)
+      maxLng: -73.7600  // Eastern Bronx (Bronx River/Westchester)
     }
   },
   'Staten Island': {
     bounds: {
-      minLat: 40.4770,  // Southern Staten Island
-      maxLat: 40.6510,  // Northern Staten Island
-      minLng: -74.2590, // Western Staten Island
-      maxLng: -74.0520  // Eastern Staten Island (closest to Brooklyn)
+      minLat: 40.4950,  // Southern Staten Island
+      maxLat: 40.6480,  // Northern Staten Island
+      minLng: -74.2600, // Western Staten Island
+      maxLng: -74.0500  // Eastern Staten Island (closest to Brooklyn)
     }
   }
 };
@@ -53,48 +53,32 @@ function isInManhattan(lat: number, lng: number): boolean {
     return false;
   }
 
-  // Manhattan is an island - more precise water boundary definitions
-  // The East River varies in longitude from about -73.93 to -73.97
-
-  // Lower Manhattan (below 14th St - lat ~40.735)
-  if (lat < 40.7350) {
-    // East River is wider here, boundary around -73.97
+  // More precise Manhattan boundaries using the East River
+  // Lower Manhattan (below Canal St - lat ~40.720)
+  if (lat < 40.7200) {
+    // East River boundary is around -73.975 to -73.98
+    if (lng > -73.9750) return false;
+  }
+  // Lower Midtown (Canal to 34th St - lat ~40.720 to 40.750)
+  else if (lat < 40.7500) {
+    // East River boundary around -73.97
     if (lng > -73.9700) return false;
   }
-  // Midtown Manhattan (14th to 59th St - lat ~40.735 to 40.765)
-  else if (lat < 40.7650) {
+  // Upper Midtown (34th to 86th St - lat ~40.750 to 40.785)
+  else if (lat < 40.7850) {
     // East River boundary around -73.95
     if (lng > -73.9500) return false;
   }
-  // Upper Manhattan (59th to 155th St - lat ~40.765 to 40.830)
+  // Upper East Side to Harlem (86th to 155th St - lat ~40.785 to 40.830)
   else if (lat < 40.8300) {
-    // East River boundary around -73.93 to -73.94
-    if (lng > -73.9350) return false;
+    // East River/Harlem River boundary around -73.93 to -73.94
+    if (lng > -73.9300) return false;
   }
-  // Northern Manhattan (above 155th St - Washington Heights/Inwood)
+  // Washington Heights/Inwood (above 155th St)
   else {
-    // More restrictive boundaries to exclude South Bronx
-    // Northern Manhattan is narrower and bounded more tightly
-    if (lng > -73.9200) return false; // Eastern boundary
-    if (lng < -73.9800) return false; // Western boundary (Hudson River)
-
-    // Additional northern boundary restriction
-    // Above 207th St (lat ~40.870), very few Manhattan stations
-    if (lat > 40.8700) {
-      // Even more restrictive for northernmost tip
-      if (lng > -73.9150 || lng < -73.9400) return false;
-    }
-  }
-
-  // Exclude Roosevelt Island (technically Manhattan but geographically separate)
-  if (lng > -73.9200 && lat > 40.7500 && lat < 40.7700) {
-    return false; // Roosevelt Island area
-  }
-
-  // Exclude areas that are clearly South Bronx
-  // Areas east of the Harlem River and north of 155th St
-  if (lat > 40.8300 && lng > -73.9200) {
-    return false; // Likely South Bronx
+    // Harlem River boundary - more restrictive to exclude Bronx
+    if (lng > -73.9150) return false; // Eastern boundary (Harlem River)
+    if (lng < -73.9850) return false; // Western boundary (Hudson River)
   }
 
   return true;
@@ -109,35 +93,29 @@ function isInBrooklyn(lat: number, lng: number): boolean {
     return false;
   }
 
-  // Brooklyn-Manhattan boundary (East River)
-  // If we're in the latitude range of Manhattan but west of East River, it's not Brooklyn
-  if (lat > 40.7000 && lat < 40.8820) {
-    // Lower Brooklyn/Manhattan boundary
-    if (lat < 40.7350 && lng < -73.9700) return false;
-    // Mid Brooklyn/Manhattan boundary
-    if (lat >= 40.7350 && lat < 40.7650 && lng < -73.9500) return false;
-    // Upper Brooklyn/Manhattan boundary
-    if (lat >= 40.7650 && lng < -73.9350) return false;
+  // Brooklyn-Manhattan boundary (East River) - more precise
+  if (lat > 40.6990 && lat < 40.7400) {
+    // Lower Brooklyn - boundary around -73.975 to -73.98
+    if (lat < 40.7200 && lng < -73.9750) return false;
+    // Mid Brooklyn - boundary around -73.97
+    if (lat >= 40.7200 && lat < 40.7350 && lng < -73.9700) return false;
+    // Upper Brooklyn - boundary around -73.95
+    if (lat >= 40.7350 && lng < -73.9500) return false;
   }
 
-  // Brooklyn-Queens boundary (more complex)
-  // Northern Brooklyn (Greenpoint/LIC area) - boundary around Newtown Creek
-  if (lat > 40.7200 && lng > -73.9400) {
-    // North of Greenpoint Bridge (lat ~40.734) and east of lng -73.94 is likely Queens
-    if (lat > 40.7340 && lng > -73.9400) {
-      // Exception for Greenpoint itself (stays Brooklyn until lng -73.93)
-      if (lat < 40.7380 && lng < -73.9300) {
-        return true; // Still Brooklyn
-      }
-      return false; // Queens
+  // Brooklyn-Queens boundary - Newtown Creek and eastern boundaries
+  // Northern Brooklyn (Williamsburg/Greenpoint area)
+  if (lat > 40.7100 && lng > -73.9500) {
+    // Newtown Creek boundary - north of lat 40.735 and east of lng -73.94 is Queens
+    if (lat > 40.7350 && lng > -73.9400) {
+      return false; // Queens territory
     }
   }
 
-  // Eastern Brooklyn-Queens boundary
-  // Roughly follows Highland Park and Jackie Robinson Parkway
-  if (lng > -73.8600) {
-    // Northern areas east of Highland Park are Queens
-    if (lat > 40.6850) return false;
+  // Eastern Brooklyn-Queens boundary (Highland Park area)
+  if (lng > -73.8500) {
+    // Areas north of Ridgewood (lat > 40.690) and east of lng -73.85 are Queens
+    if (lat > 40.6900) return false;
   }
 
   return true;
@@ -152,22 +130,22 @@ function isInQueens(lat: number, lng: number): boolean {
     return false;
   }
 
-  // Western Queens-Brooklyn boundary
-  if (lng < -73.9000) {
-    // Areas south of Greenpoint (lat < 40.734) are Brooklyn
-    if (lat < 40.7340) return false;
+  // Western Queens-Brooklyn boundary (Newtown Creek)
+  if (lng < -73.9400) {
+    // Areas south of Newtown Creek (lat < 40.735) are Brooklyn
+    if (lat < 40.7350) return false;
   }
 
-  // Western Queens-Manhattan boundary (around Long Island City)
-  if (lng < -73.9400 && lat > 40.7400 && lat < 40.7700) {
-    // This narrow strip is still Queens (LIC area)
-    return true;
-  }
-
-  // Queens-Bronx boundary (roughly along East River and Hell Gate)
-  if (lat > 40.7800) {
-    // Areas west of lng -73.90 and north of lat 40.78 could be Bronx
+  // Queens-Bronx boundary (East River and Bronx Kill)
+  if (lat > 40.7850) {
+    // Areas west of lng -73.90 and north of lat 40.785 are Bronx
     if (lng < -73.9000) return false;
+  }
+
+  // Exclude Manhattan areas (Long Island City is Queens, but very close to Manhattan)
+  if (lng < -73.9500 && lat > 40.7400 && lat < 40.7600) {
+    // This is the LIC area - still Queens
+    return true;
   }
 
   return true;
@@ -182,43 +160,21 @@ function isInBronx(lat: number, lng: number): boolean {
     return false;
   }
 
-  // Bronx is north of the Harlem River and east of the Hudson
-  // Southern boundary with Manhattan is around 155th Street (lat ~40.785)
-  if (lat < 40.7850) {
+  // Bronx is north of the Harlem River
+  // Southern boundary with Manhattan is more precisely around lat 40.790
+  if (lat < 40.7900) {
     return false;
   }
 
-  // Refined western boundary to exclude northern Manhattan
-  // The Harlem River and Spuyten Duyvil Creek form the boundary
-
-  // The Harlem River runs roughly north-south, then curves east
-  // Most of the Bronx boundary with Manhattan is east of -73.91
-
-  // For areas below the northern tip of Manhattan
-  if (lat < 40.8750) {
-    // Northern Manhattan (Washington Heights/Inwood) extends to about -73.91
-    // Bronx must be significantly east of this
-    if (lng < -73.9050) {
-      return false; // Still northern Manhattan
-    }
-  }
-  // For the northernmost areas where Spuyten Duyvil Creek forms boundary
-  else {
-    // Above northern Manhattan, standard Harlem River boundary
-    if (lng < -73.9200) {
-      return false;
-    }
+  // Western boundary - Harlem River and Spuyten Duyvil Creek
+  // The Harlem River forms most of the western boundary
+  if (lng < -73.9100) {
+    return false; // West of Harlem River is Manhattan
   }
 
-  // Specific exclusions for northern Manhattan areas that extend east
-  // Washington Heights area
-  if (lat > 40.8400 && lat < 40.8650 && lng > -73.9400 && lng < -73.9050) {
-    return false; // Washington Heights
-  }
-
-  // Inwood area (northern tip of Manhattan)
-  if (lat > 40.8650 && lat < 40.8820 && lng > -73.9300 && lng < -73.9050) {
-    return false; // Inwood
+  // Eastern boundary with Westchester County
+  if (lng > -73.7600) {
+    return false; // Too far east
   }
 
   return true;
@@ -371,22 +327,24 @@ const MANUAL_OVERRIDES = new Map([
 export function getBoroughFromCoordinates(lat: number, lng: number, stationName?: string): string {
   // Check manual overrides first if station name is provided
   if (stationName && MANUAL_OVERRIDES.has(stationName)) {
+    const overrideBorough = MANUAL_OVERRIDES.get(stationName)!;
+    console.log(`Using manual override for "${stationName}": ${overrideBorough}`);
     return MANUAL_OVERRIDES.get(stationName)!;
   }
 
   // Check each borough using precise boundary functions
-  // Order matters - check more isolated boroughs first
+  // Order matters - check most isolated/distinct boroughs first
 
   if (isInStatenIsland(lat, lng)) {
     return 'Staten Island';
   }
 
-  if (isInBronx(lat, lng)) {
-    return 'Bronx';
-  }
-
   if (isInManhattan(lat, lng)) {
     return 'Manhattan';
+  }
+
+  if (isInBronx(lat, lng)) {
+    return 'Bronx';
   }
 
   if (isInBrooklyn(lat, lng)) {
@@ -399,8 +357,8 @@ export function getBoroughFromCoordinates(lat: number, lng: number, stationName?
 
   // Fallback: determine by proximity to borough centers if no precise match
   const boroughCenters = {
-    Manhattan: { lat: 40.7831, lng: -73.9712 },
-    Brooklyn: { lat: 40.6782, lng: -73.9442 },
+    Manhattan: { lat: 40.7589, lng: -73.9851 },
+    Brooklyn: { lat: 40.6892, lng: -73.9442 },
     Queens: { lat: 40.7282, lng: -73.7949 },
     Bronx: { lat: 40.8448, lng: -73.8648 },
     'Staten Island': { lat: 40.5795, lng: -74.1502 }
@@ -419,7 +377,7 @@ export function getBoroughFromCoordinates(lat: number, lng: number, stationName?
     }
   }
 
-  console.log(`Fallback assignment for coordinates (${lat}, ${lng})${stationName ? ` "${stationName}"` : ''}: ${closestBorough}`);
+  console.log(`Fallback assignment for coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)})${stationName ? ` "${stationName}"` : ''}: ${closestBorough}`);
   return closestBorough;
 }
 
