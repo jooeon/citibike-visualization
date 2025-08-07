@@ -1,0 +1,44 @@
+import React, { useState } from 'react';
+import { Info, X } from 'lucide-react';
+
+const InfoButton: React.FC = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="absolute bottom-4 left-4 z-[1000]">
+      {/* Collapsed Info Button */}
+      {!isExpanded && (
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-3 text-white/80 hover:text-white hover:bg-black/70 transition-all duration-200 flex items-center gap-2"
+        >
+          <Info className="w-4 h-4" />
+          <span className="text-sm font-medium">Info</span>
+        </button>
+      )}
+
+      {/* Expanded Info Panel */}
+      {isExpanded && (
+        <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 max-w-sm">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-white/80 flex-shrink-0 mt-0.5" />
+              <h3 className="text-white font-medium text-sm">About This Project</h3>
+            </div>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-white/60 hover:text-white transition-colors ml-2"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="text-white/70 text-sm leading-relaxed">
+            A creative data visualization project that transforms NYC Citi Bike trip data into an artistic, spatial representation.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default InfoButton;
