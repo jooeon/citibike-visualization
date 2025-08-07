@@ -1,34 +1,53 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 interface DigitalClockProps {
   currentTime: string;
   currentDate: string;
-  onTimeJump?: (hours: number) => void;
+  onTimeJump: (hours: number) => void;
+  onDateClick: () => void;
   isPlaying?: boolean;
+  canJumpBackward: boolean;
+  canJumpForward: boolean;
 }
 
 const DigitalClock: React.FC<DigitalClockProps> = ({ 
   currentTime, 
   currentDate, 
   onTimeJump,
+  onDateClick,
   isPlaying = false 
+  canJumpBackward,
+  canJumpForward
 }) => {
   const handleTimeJump = (hours: number) => {
-    if (onTimeJump) {
-      // Call the time jump function through window reference
-      if ((window as any).handleTimeJump) {
-        (window as any).handleTimeJump(hours);
-      }
+    // Call the time jump function through window reference
+    if ((window as any).handleTimeJump) {
+      (window as any).handleTimeJump(hours);
     }
   };
 
   return (
     <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-[1000] flex gap-2 sm:gap-4">
       <div className="bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg px-1 py-2 sm:px-2 pb-1 relative">
-        <div className="text-white/80 font-mono text-xs sm:text-sm tracking-wide mb-1 text-center">
+        <button
+          onClick={onDateClick}
+          disabled={!canJumpForward}
+          disabled={!canJumpBackward}
+          className={`absolute bottom-2 left-2 transition-colors p-1 rounded flex items-center gap-1 ${
+            canJumpBackward 
+              ? 'text-white/60 hover:text-white cursor-pointer' 
+              : 'text-white/30 cursor-not-allowed'
+          className={`absolute bottom-2 right-2 transition-colors p-1 rounded flex items-center gap-1 ${
+            canJumpForward 
+              ? 'text-white/60 hover:text-white cursor-pointer' 
+              : 'text-white/30 cursor-not-allowed'
+          }`}
+          title="Select date"
+        >
+          <Calendar className="w-3 h-3" />
           {currentDate}
-        </div>
+        </button>
         
         {/* Current Time - Centered */}
         <div className="text-white font-mono text-sm sm:text-xl tracking-wider text-center mb-1">
