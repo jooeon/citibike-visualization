@@ -4,6 +4,7 @@ import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
+import DateSelector from './components/DateSelector';
 import InfoButton from './components/InfoButton';
 import type { AnimationState, Station, ProcessedTrip } from './types';
 
@@ -19,6 +20,9 @@ function App() {
   const [showStationSelector, setShowStationSelector] = useState<boolean>(false);
   const [filteredTrips, setFilteredTrips] = useState<ProcessedTrip[]>([]);
   const [stationTripCounts, setStationTripCounts] = useState<Map<number, number>>(new Map());
+  const [showDateSelector, setShowDateSelector] = useState<boolean>(false);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [allTrips, setAllTrips] = useState<ProcessedTrip[]>([]);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -121,7 +125,78 @@ function App() {
     setStationTripCounts(counts);
   }, []);
 
+  const handleAllTripsUpdate = useCallback((trips: ProcessedTrip[]) => {
+    setAllTrips(trips);
+    
+    // Extract unique dates from trips
+    const dates = new Set<string>();
+    trips.forEach(trip => {
+      const dateKey = new Date(trip.startTimestamp * 1000).toISOString().split('T')[0];
+      dates.add(dateKey);
+    });
+    setAvailableDates(Array.from(dates).sort());
+  }, []);
+
+  const handleDateClick = useCallback(() => {
+    setShowDateSelector(true);
+  }, []);
+
+  const handleDateSelect = useCallback((dateStr: string) => {
+    // Convert MM/DD/YYYY format to YYYY-MM-DD for comparison
+    const [month, day, year] = dateStr.split('/');
+    const targetDateKey = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    
+    // Find the first trip on the selected date
+    const targetTrip = allTrips.find(trip => {
+      const tripDateKey = new Date(trip.startTimestamp * 1000).toISOString().split('T')[0];
+      return tripDateKey === targetDateKey;
+    });
+    
+    if (targetTrip) {
+      // Calculate time difference and jump to that date
+      const currentSimTime = getCurrentSimulationTime();
+      const targetTime = targetTrip.startTimestamp * 1000;
+      const timeDiff = targetTime - currentSimTime;
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      
+      handleTimeJump(hoursDiff);
+    }
+    
+    setShowDateSelector(false);
+  }, [allTrips]);
+
+  const getCurrentSimulationTime = useCallback((): number => {
+    if (allTrips.length === 0) return Date.now();
+    
+    // Get the first trip time as baseline
+    const firstTripTime = allTrips[0].startTimestamp * 1000;
+    
+    // Add current simulation offset (this would need to be tracked from the renderer)
+    // For now, we'll estimate based on trip counter and total trips
+    const progress = animationState.totalTrips > 0 ? animationState.tripCounter / animationState.totalTrips : 0;
+    const lastTripTime = allTrips[allTrips.length - 1].startTimestamp * 1000;
+    const estimatedCurrentTime = firstTripTime + (lastTripTime - firstTripTime) * progress;
+    
+    return estimatedCurrentTime;
+  }, [allTrips, animationState.tripCounter, animationState.totalTrips]);
+
+  const canJumpToTime = useCallback((hours: number): boolean => {
+    if (allTrips.length === 0) return false;
+    
+    const currentTime = getCurrentSimulationTime();
+    const targetTime = currentTime + (hours * 60 * 60 * 1000);
+    
+    // Check if target time has any trips within a reasonable window (±1 hour)
+    const windowStart = targetTime - (60 * 60 * 1000);
+    const windowEnd = targetTime + (60 * 60 * 1000);
+    
+    return allTrips.some(trip => {
+      const tripTime = trip.startTimestamp * 1000;
+      return tripTime >= windowStart && tripTime <= windowEnd;
+    });
+  }, [allTrips, getCurrentSimulationTime]);
   const handleTimeJump = useCallback((hours: number) => {
+    // Implementation will be handled by VisualizationCanvas
   }
   )
   return (
@@ -138,6 +213,7 @@ function App() {
         onLoadingStateChange={handleLoadingStateChange}
         onFilteredTripsUpdate={handleFilteredTripsUpdate}
         onStationTripCountsUpdate={handleStationTripCountsUpdate}
+        onAllTripsUpdate={handleAllTripsUpdate}
         showMap={showMap}
         selectedStationIndices={selectedStationIndices}
         onTimeJump={handleTimeJump}
@@ -149,6 +225,9 @@ function App() {
         currentDate={currentDate} 
         onTimeJump={handleTimeJump}
         isPlaying={animationState.isPlaying}
+        onDateClick={handleDateClick}
+        canJumpBackward={canJumpToTime(-6)}
+        canJumpForward={canJumpToTime(6)}
       />
 
       {/* Minimal Controls */}
@@ -183,6 +262,16 @@ function App() {
           allStations={stations}
           filteredTrips={filteredTrips}
           stationTripCounts={stationTripCounts}
+        />
+      )}
+
+      {/* Date Selector Modal */}
+      {showDateSelector && (
+        <DateSelector
+          currentDate={currentDate.split(' ')[1] || currentDate} // Extract date part from "Wed 05/14/2025"
+          availableDates={availableDates}
+          onDateSelect={handleDateSelect}
+          onClose={() => setShowDateSelector(false)}
         />
       )}
 
