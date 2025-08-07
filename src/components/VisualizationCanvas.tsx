@@ -321,20 +321,19 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // 0 = full dark tiles, 1 = full light tiles
     let lightOpacity = 0;
 
-    if (timeDecimal >= 5 && timeDecimal <= 22) {
-      // Extended daytime period (5 AM to 10 PM)
-      if (timeDecimal <= 10) {
-        // Very gradual sunrise transition (5-10 AM) - 5 hours
-        lightOpacity = (timeDecimal - 5) / 5; // 0 to 1 over 5 hours
+    if (timeDecimal >= 4 && timeDecimal <= 24) {
+      // Extended daytime period (4 AM to 12 AM)
+      if (timeDecimal <= 11) {
+        // Very gradual sunrise transition (4-11 AM) - 7 hours
+        lightOpacity = (timeDecimal - 4) / 7; // 0 to 1 over 7 hours
       } else if (timeDecimal <= 17) {
-        // Full daylight (10 AM - 5 PM)
+        // Full daylight (11 AM - 5 PM)
         lightOpacity = 1;
       } else {
-        // Very gradual sunset transition (5-10 PM) - 5 hours
-        lightOpacity = 1 - ((timeDecimal - 17) / 5); // 1 to 0 over 5 hours
+        // Very gradual sunset transition (5 PM - 12 AM) - 7 hours
+        lightOpacity = 1 - ((timeDecimal - 17) / 7); // 1 to 0 over 7 hours
       }
     }
-    // Night time (10 PM - 5 AM): lightOpacity remains 0
 
     // Apply smooth easing for more natural transitions
     lightOpacity = easeInOutCubic(lightOpacity);
