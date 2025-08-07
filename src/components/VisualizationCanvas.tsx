@@ -321,20 +321,20 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // 0 = full dark tiles, 1 = full light tiles
     let lightOpacity = 0;
 
-    if (timeDecimal >= 6 && timeDecimal <= 19) {
-      // Daytime period (6 AM to 7 PM)
-      if (timeDecimal <= 7) {
-        // Sunrise transition (6-7 AM)
-        lightOpacity = (timeDecimal - 6) / 1; // 0 to 1 over 1 hour
-      } else if (timeDecimal <= 18) {
-        // Full daylight (7 AM - 6 PM)
+    if (timeDecimal >= 5 && timeDecimal <= 20) {
+      // Extended daytime period (5 AM to 8 PM)
+      if (timeDecimal <= 8) {
+        // Gradual sunrise transition (5-8 AM) - 3 hours
+        lightOpacity = (timeDecimal - 5) / 3; // 0 to 1 over 3 hours
+      } else if (timeDecimal <= 17) {
+        // Full daylight (8 AM - 5 PM)
         lightOpacity = 1;
       } else {
-        // Sunset transition (6-7 PM)
-        lightOpacity = 1 - ((timeDecimal - 18) / 1); // 1 to 0 over 1 hour
+        // Gradual sunset transition (5-8 PM) - 3 hours
+        lightOpacity = 1 - ((timeDecimal - 17) / 3); // 1 to 0 over 3 hours
       }
     }
-    // Night time (7 PM - 6 AM): lightOpacity remains 0
+    // Night time (8 PM - 5 AM): lightOpacity remains 0
 
     // Apply smooth easing for more natural transitions
     lightOpacity = easeInOutCubic(lightOpacity);
@@ -399,7 +399,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   // Toggle map visibility
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.style.transition = 'opacity 1000ms ease-in-out';
+      containerRef.current.style.transition = 'opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1)';
       containerRef.current.style.opacity = showMap ? '1' : '0';
     }
   }, [showMap]);
@@ -412,8 +412,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         className="absolute inset-0 w-full h-full"
         style={{ 
           background: '#000000',
-          opacity: showMap ? 1 : 0,
-          transition: 'opacity 1000ms ease-in-out'
+          opacity: showMap ? 1 : 0
         }}
       />
       
