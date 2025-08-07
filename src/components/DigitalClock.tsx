@@ -38,6 +38,7 @@ const DigitalClock: React.FC<DigitalClockProps> = ({
             canJumpBackward 
               ? 'text-white/60 hover:text-white cursor-pointer' 
               : 'text-white/30 cursor-not-allowed'
+          }
           className={`absolute bottom-2 right-2 transition-colors p-1 rounded flex items-center gap-1 ${
             canJumpForward 
               ? 'text-white/60 hover:text-white cursor-pointer' 
@@ -89,6 +90,7 @@ const DigitalClock: React.FC<DigitalClockProps> = ({
       </div>
     </div>
   );
+}
 };
 
 export default DigitalClock;
