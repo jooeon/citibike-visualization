@@ -159,7 +159,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
             />
 
             {/* Modal content */}
-            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-4 max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-4 max-w-4xl w-full mx-4 h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -232,13 +232,15 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 onClick={handleSelectAllVisible}
                                 className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                Select All
+                                <span className="sm:hidden">Select All</span>
+                                <span className="hidden sm:inline">Select All Visible</span>
                             </button>
                             <button
                                 onClick={handleSelectNoneVisible}
                                 className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
                             >
-                                Deselect All
+                                <span className="sm:hidden">Deselect All</span>
+                                <span className="hidden sm:inline">Deselect All Visible</span>
                             </button>
                         </div>
                     </div>
@@ -257,7 +259,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Station List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto min-h-0">
                     <div className="space-y-4">
                         {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
                             <div key={borough} className="space-y-2">
