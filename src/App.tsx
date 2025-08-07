@@ -122,6 +122,8 @@ function App() {
   }, []);
 
   const handleTimeJump = useCallback((hours: number) => {
+  }
+  )
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}

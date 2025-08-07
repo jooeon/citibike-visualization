@@ -427,6 +427,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     return () => {
       delete (window as any).handleTimeJump;
     };
+  }
+  )
   // Animation loop for rendering
   useEffect(() => {
     if (!rendererRef.current) return;
