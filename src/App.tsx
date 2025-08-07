@@ -181,23 +181,16 @@ function App() {
 
   const handleDateSelect = useCallback((dateStr: string) => {
     // dateStr is already in YYYY-MM-DD format from DateSelector
-    const targetDateKey = dateStr;
+    const targetDate = new Date(dateStr + 'T00:00:00'); // Set to 12:00 AM of selected date
+    const targetTimestamp = targetDate.getTime();
     
-    // Find the first trip on the selected date
-    const targetTrip = allTrips.find(trip => {
-      const tripDateKey = new Date(trip.startTimestamp * 1000).toISOString().split('T')[0];
-      return tripDateKey === targetDateKey;
-    });
+    // Calculate time difference from current simulation time to target date at 12:00 AM
+    const currentSimTime = getCurrentSimulationTime();
+    const timeDiff = targetTimestamp - currentSimTime;
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
     
-    if (targetTrip) {
-      // Calculate time difference and jump to that date
-      const currentSimTime = getCurrentSimulationTime();
-      const targetTime = targetTrip.startTimestamp * 1000;
-      const timeDiff = targetTime - currentSimTime;
-      const hoursDiff = timeDiff / (1000 * 60 * 60);
-      
-      handleTimeJump(hoursDiff);
-    }
+    // Jump to 12:00 AM of the selected date
+    handleTimeJump(hoursDiff);
     
     setShowDateSelector(false);
   }, [allTrips, getCurrentSimulationTime, handleTimeJump]);
