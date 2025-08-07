@@ -93,7 +93,7 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
             step="0.5"
             value={animationState.speed}
             onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-            className="w-16 sm:w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+            className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
           />
         </div>
 
