@@ -434,8 +434,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     return () => {
       delete (window as any).handleTimeJump;
     };
-  }
-  )
+  }, [onTimeJump, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity]);
+  
   // Animation loop for rendering
   useEffect(() => {
     if (!rendererRef.current) return;

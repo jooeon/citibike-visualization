@@ -137,33 +137,6 @@ function App() {
     setAvailableDates(Array.from(dates).sort());
   }, []);
 
-  const handleDateClick = useCallback(() => {
-    setShowDateSelector(true);
-  }, []);
-
-  const handleDateSelect = useCallback((dateStr: string) => {
-    // dateStr is already in YYYY-MM-DD format from DateSelector
-    const targetDateKey = dateStr;
-    
-    // Find the first trip on the selected date
-    const targetTrip = allTrips.find(trip => {
-      const tripDateKey = new Date(trip.startTimestamp * 1000).toISOString().split('T')[0];
-      return tripDateKey === targetDateKey;
-    });
-    
-    if (targetTrip) {
-      // Calculate time difference and jump to that date
-      const currentSimTime = getCurrentSimulationTime();
-      const targetTime = targetTrip.startTimestamp * 1000;
-      const timeDiff = targetTime - currentSimTime;
-      const hoursDiff = timeDiff / (1000 * 60 * 60);
-      
-      handleTimeJump(hoursDiff);
-    }
-    
-    setShowDateSelector(false);
-  }, [allTrips, getCurrentSimulationTime, handleTimeJump]);
-
   const getCurrentSimulationTime = useCallback((): number => {
     if (allTrips.length === 0) return Date.now();
     
@@ -194,10 +167,41 @@ function App() {
       return tripTime >= windowStart && tripTime <= windowEnd;
     });
   }, [allTrips, getCurrentSimulationTime]);
+
   const handleTimeJump = useCallback((hours: number) => {
-    // Implementation will be handled by VisualizationCanvas
-  }
-  )
+    // Use the global function exposed by VisualizationCanvas
+    if ((window as any).handleTimeJump) {
+      (window as any).handleTimeJump(hours);
+    }
+  }, []);
+
+  const handleDateClick = useCallback(() => {
+    setShowDateSelector(true);
+  }, []);
+
+  const handleDateSelect = useCallback((dateStr: string) => {
+    // dateStr is already in YYYY-MM-DD format from DateSelector
+    const targetDateKey = dateStr;
+    
+    // Find the first trip on the selected date
+    const targetTrip = allTrips.find(trip => {
+      const tripDateKey = new Date(trip.startTimestamp * 1000).toISOString().split('T')[0];
+      return tripDateKey === targetDateKey;
+    });
+    
+    if (targetTrip) {
+      // Calculate time difference and jump to that date
+      const currentSimTime = getCurrentSimulationTime();
+      const targetTime = targetTrip.startTimestamp * 1000;
+      const timeDiff = targetTime - currentSimTime;
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      
+      handleTimeJump(hoursDiff);
+    }
+    
+    setShowDateSelector(false);
+  }, [allTrips, getCurrentSimulationTime, handleTimeJump]);
+
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
