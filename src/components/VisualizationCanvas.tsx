@@ -383,7 +383,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     if (!onTimeJump) return;
 
     const handleTimeJumpInternal = (hours: number) => {
-      if (!rendererRef.current || animationState.isPlaying) return;
+      if (!rendererRef.current) return;
       
       // Jump the simulation time by the specified hours
       rendererRef.current.jumpTime(hours);
@@ -427,7 +427,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     return () => {
       delete (window as any).handleTimeJump;
     };
-  }, [onTimeJump, animationState.isPlaying, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity]);
   // Animation loop for rendering
   useEffect(() => {
     if (!rendererRef.current) return;

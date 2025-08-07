@@ -29,29 +29,31 @@ const DigitalClock: React.FC<DigitalClockProps> = ({
         <div className="text-white/80 font-mono text-xs sm:text-sm tracking-wide mb-0.5 sm:mb-1">
           {currentDate}
         </div>
-        <div className="flex items-center gap-2">
+        
+        {/* Current Time - Centered */}
+        <div className="text-white font-mono text-sm sm:text-2xl tracking-wider text-center mb-2">
+          {currentTime}
+        </div>
+        
+        {/* Time Jump Controls - Below time */}
+        <div className="flex items-center justify-center gap-3">
           {/* Time Jump Backward */}
           <button
             onClick={() => handleTimeJump(-6)}
-            disabled={isPlaying}
-            className="text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5 rounded"
+            className="text-white/60 hover:text-white transition-colors p-1 rounded flex items-center gap-1"
             title="Jump back 6 hours"
           >
             <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="text-xs font-mono">-6 hrs</span>
           </button>
-          
-          {/* Current Time */}
-          <div className="text-white font-mono text-sm sm:text-2xl tracking-wider">
-            {currentTime}
-          </div>
           
           {/* Time Jump Forward */}
           <button
             onClick={() => handleTimeJump(6)}
-            disabled={isPlaying}
-            className="text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-0.5 rounded"
+            className="text-white/60 hover:text-white transition-colors p-1 rounded flex items-center gap-1"
             title="Jump forward 6 hours"
           >
+            <span className="text-xs font-mono">+6 hrs</span>
             <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>

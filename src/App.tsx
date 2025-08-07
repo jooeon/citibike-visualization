@@ -122,12 +122,6 @@ function App() {
   }, []);
 
   const handleTimeJump = useCallback((hours: number) => {
-    // Only allow time jumps when animation is paused
-    if (!animationState.isPlaying) {
-      // This will be handled by the VisualizationCanvas component
-      // We'll pass this down as a prop
-    }
-  }, [animationState.isPlaying]);
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
