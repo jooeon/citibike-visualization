@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, MapPin, Search, CheckSquare, Square, Building2, Filter } from 'lucide-react';
+import { X, MapPin, Search, CheckSquare, Square, Building2, Filter, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Station, ProcessedTrip } from '../types';
 import { groupStationsByBorough, getBoroughStats } from '../utils/boroughUtils';
 
@@ -30,6 +30,8 @@ const StationSelector: React.FC<StationSelectorProps> = ({
     const [selectedBoroughs, setSelectedBoroughs] = useState<Set<string>>(
         new Set(['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'])
     );
+    const [collapsedBoroughs, setCollapsedBoroughs] = useState<Set<string>>(new Set());
+    const [sortOrder, setSortOrder] = useState<'name' | 'trips-asc' | 'trips-desc'>('name');
 
     const getStationIndex = (station: Station): number => {
         return allStations.findIndex(s => s.name === station.name);
@@ -59,6 +61,28 @@ const StationSelector: React.FC<StationSelectorProps> = ({
         setSelectedBoroughs(new Set());
     };
 
+    const handleBoroughCollapse = (borough: string) => {
+        setCollapsedBoroughs(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(borough)) {
+                newSet.delete(borough);
+            } else {
+                newSet.add(borough);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSortChange = () => {
+        if (sortOrder === 'name') {
+            setSortOrder('trips-desc');
+        } else if (sortOrder === 'trips-desc') {
+            setSortOrder('trips-asc');
+        } else {
+            setSortOrder('name');
+        }
+    };
+
     const groupedStations = useMemo(() => {
         return groupStationsByBorough(stations);
     }, [stations]);
@@ -85,28 +109,37 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 );
             }
 
+            // Sort stations within each borough
             if (filteredStations.length > 0) {
-                // Sort stations: selected first, then unselected, both alphabetically
-                const sortedStations = filteredStations.sort((a, b) => {
-                    const aIndex = getStationIndex(a);
-                    const bIndex = getStationIndex(b);
-                    const aSelected = selectedStationIndices.has(aIndex);
-                    const bSelected = selectedStationIndices.has(bIndex);
-                    
-                    // Selected stations come first
-                    if (aSelected && !bSelected) return -1;
-                    if (!aSelected && bSelected) return 1;
-                    
-                    // Within same selection status, sort alphabetically
-                    return a.name.localeCompare(b.name);
-                });
-                
-                filtered.set(borough, sortedStations);
+                if (sortOrder === 'trips-desc') {
+                    filteredStations.sort((a, b) => {
+                        const aIndex = getStationIndex(a);
+                        const bIndex = getStationIndex(b);
+                        const aTrips = getStationTripCount(aIndex);
+                        const bTrips = getStationTripCount(bIndex);
+                        return bTrips - aTrips; // Descending
+                    });
+                } else if (sortOrder === 'trips-asc') {
+                    filteredStations.sort((a, b) => {
+                        const aIndex = getStationIndex(a);
+                        const bIndex = getStationIndex(b);
+                        const aTrips = getStationTripCount(aIndex);
+                        const bTrips = getStationTripCount(bIndex);
+                        return aTrips - bTrips; // Ascending
+                    });
+                } else {
+                    // Sort by name (default)
+                    filteredStations.sort((a, b) => a.name.localeCompare(b.name));
+                }
+            }
+
+            if (filteredStations.length > 0) {
+                filtered.set(borough, filteredStations);
             }
         });
         
         return filtered;
-    }, [groupedStations, selectedBoroughs, searchTerm, selectedStationIndices]);
+    }, [groupedStations, selectedBoroughs, searchTerm, selectedStationIndices, sortOrder, stationTripCounts, allStations]);
 
     const selectedCount = stations.filter(station =>
         selectedStationIndices.has(getStationIndex(station))
@@ -246,73 +279,102 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                     </div>
                 </div>
 
-                {/* Search */}
-                <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-                    <input
-                        type="text"
-                        placeholder="Search stations..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-1 sm:py-2 bg-white/10 border border-white/20 rounded-lg text-xs sm:text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-colors"
-                    />
-                </div>
-
-                {/* Station List */}
-                <div className="flex-1 overflow-y-auto min-h-0">
-                    <div className="space-y-4">
-                        {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
-                            <div key={borough} className="space-y-2">
-                                {/* Borough Header */}
+                {/* Station Controls and Sorting */}
+                <div className="flex items-center justify-between text-xs text-white/60 mb-3">
+                    <span className="text-xs sm:text-sm">{selectedCount} of {stations.length} selected • {visibleStations.length} visible</span>
+                    <div className="flex gap-2 items-center">
+                        {/* Desktop-only sorting */}
+                        <button
+                            onClick={handleSortChange}
+                            className="hidden sm:flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                            title="Sort stations"
+                        >
+                            {sortOrder === 'trips-desc' ? (
+                                <ArrowDown className="w-3 h-3" />
+                            ) : sortOrder === 'trips-asc' ? (
+                                <ArrowUp className="w-3 h-3" />
+                            ) : (
+                                <ArrowUpDown className="w-3 h-3" />
+                            )}
+                            <span>
+                                {sortOrder === 'trips-desc' ? 'Trips ↓' :
+                                 sortOrder === 'trips-asc' ? 'Trips ↑' : 'Name'}
+                            </span>
+                        </button>
+                        
+                        <button
+                            onClick={handleSelectAllVisible}
+                            className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                        >
+                            <span className="sm:hidden">Select All</span>
+                            <span className="hidden sm:inline">Select All Visible</span>
+                        </button>
+                        <button
+                            onClick={handleSelectNoneVisible}
+                            className="px-1 sm:px-2 py-0.5 sm:py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                        >
+                            <span className="sm:hidden">Deselect All</span>
+                            <span className="hidden sm:inline">Deselect All Visible</span>
+                        </button>
                                 <div className={`p-2 sm:p-3 rounded-lg border ${getBoroughColor(borough)}`}>
-                                    <div className="flex items-center justify-between text-white">
+                                    <button
+                                        onClick={() => handleBoroughCollapse(borough)}
+                                        className="w-full flex items-center justify-between text-white hover:bg-white/10 rounded transition-colors p-1 -m-1"
+                                    >
                                         <div className="flex items-center gap-2">
+                                            {collapsedBoroughs.has(borough) ? (
+                                                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            ) : (
+                                                <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            )}
                                             <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
                                             <span className="font-medium text-xs sm:text-sm text-white">{borough}</span>
                                         </div>
                                         <div className="text-xs sm:text-sm opacity-80">
                                             {stationList.length} stations
                                         </div>
-                                    </div>
+                                    </button>
                                 </div>
 
                                 {/* Stations in Borough */}
-                                <div className="space-y-1 ml-2 sm:ml-4">
-                                    {stationList.map((station) => {
-                                        const stationIndex = getStationIndex(station);
-                                        const isSelected = selectedStationIndices.has(stationIndex);
-                                        const boroughColorClass = getBoroughColor(borough);
+                                {!collapsedBoroughs.has(borough) && (
+                                    <div className="space-y-1 ml-2 sm:ml-4">
+                                        {stationList.map((station) => {
+                                            const stationIndex = getStationIndex(station);
+                                            const isSelected = selectedStationIndices.has(stationIndex);
+                                            const boroughColorClass = getBoroughColor(borough);
 
-                                        return (
-                                            <button
-                                                key={`${station.id}-${stationIndex}`}
-                                                onClick={() => onStationToggle(stationIndex)}
-                                                className={`w-full text-left p-2 sm:p-3 rounded-lg border transition-all duration-200 flex items-start gap-2 sm:gap-3 ${
-                                                    isSelected
-                                                        ? `${getBoroughColor(station.borough || borough)} text-white`
-                                                        : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
-                                                }`}
-                                            >
-                                                <div className="flex-shrink-0 mt-0.5 sm:mt-1">
-                                                    {isSelected ? (
-                                                        <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                                                    ) : (
-                                                        <Square className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                                                    )}
-                                                </div>
+                                            return (
+                                                <button
+                                                    key={`${station.id}-${stationIndex}`}
+                                                    onClick={() => onStationToggle(stationIndex)}
+                                                    className={`w-full text-left p-2 sm:p-3 rounded-lg border transition-all duration-200 flex items-start gap-2 sm:gap-3 ${
+                                                        isSelected
+                                                            ? `${getBoroughColor(station.borough || borough)} text-white`
+                                                            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
+                                                    }`}
+                                                >
+                                                    <div className="flex-shrink-0 mt-0.5 sm:mt-1">
+                                                        {isSelected ? (
+                                                            <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                                        ) : (
+                                                            <Square className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                                        )}
+                                                    </div>
 
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-xs sm:text-sm truncate">
-                                                        {station.name}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-xs sm:text-sm truncate">
+                                                            {station.name}
+                                                        </div>
+                                                        <div className="text-xs text-white/60 mt-0.5 sm:mt-1">
+                                                            {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
+                                                        </div>
                                                     </div>
-                                                    <div className="text-xs text-white/60 mt-0.5 sm:mt-1">
-                                                        {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

@@ -541,14 +541,21 @@ export class ChronologicalRenderer {
     const minute = trip.startTime.getMinutes();
     const timeDecimal = hour + minute / 60; // Convert to decimal hours (e.g., 6.5 for 6:30)
 
-    // Define color stops for 24-hour cycle
+    // Define color stops for 24-hour cycle with gradual transitions
     const colorStops = [
-      { time: 0, color: [139, 92, 246] },   // Night - purple (00:00)
-      { time: 6, color: [139, 92, 246] },   // Night - purple (06:00)
-      { time: 10, color: [79, 70, 229] },   // Morning rush - blue (10:00)
-      { time: 16, color: [245, 158, 11] },  // Midday - amber (16:00)
+      { time: 0, color: [139, 92, 246] },   // Midnight - purple (00:00)
+      { time: 2, color: [120, 80, 220] },   // Deep night - darker purple (02:00)
+      { time: 4, color: [80, 70, 180] },    // Pre-dawn - dark blue-purple (04:00)
+      { time: 6, color: [60, 80, 160] },    // Dawn - dark blue (06:00)
+      { time: 8, color: [100, 120, 200] },  // Early morning - lighter blue (08:00)
+      { time: 10, color: [150, 180, 80] },  // Morning - yellow-green (10:00)
+      { time: 12, color: [220, 200, 60] },  // Noon - bright yellow (12:00)
+      { time: 14, color: [245, 158, 11] },  // Afternoon - amber (14:00)
+      { time: 16, color: [255, 140, 40] },  // Late afternoon - orange (16:00)
+      { time: 18, color: [240, 100, 60] },  // Evening - orange-red (18:00)
       { time: 20, color: [220, 38, 38] },   // Evening rush - red (20:00)
-      { time: 24, color: [139, 92, 246] }   // Night - purple (24:00)
+      { time: 22, color: [180, 60, 120] },  // Late evening - red-purple (22:00)
+      { time: 24, color: [139, 92, 246] }   // Midnight - purple (24:00)
     ];
 
     // Find the two color stops to interpolate between
