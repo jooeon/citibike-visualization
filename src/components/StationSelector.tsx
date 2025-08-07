@@ -159,9 +159,9 @@ const StationSelector: React.FC<StationSelectorProps> = ({
             />
 
             {/* Modal content */}
-            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-4 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto flex flex-col">
+            <div className="relative bg-black/80 backdrop-blur-md border border-white/20 rounded-xl p-4 max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-3 sticky top-0 bg-black/80 backdrop-blur-md pb-2">
+                <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <MapPin className="w-5 h-5 text-white/80" />
                         <h2 className="text-white text-lg font-semibold">Filter by Starting Stations</h2>
@@ -191,15 +191,18 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                     <button
                                         key={borough}
                                         onClick={() => handleBoroughToggle(borough)}
-                                        className={`px-2 py-1.5 rounded-md border text-xs transition-all duration-200 min-w-0 flex-shrink-0 ${
+                                        className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 ${
                                             isSelected
                                                 ? `${getBoroughColor(borough)} text-white`
                                                 : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                                         }`}
                                     >
-                                        <div className="font-medium text-center text-xs leading-tight">{borough}</div>
+                                        <div className="font-medium text-center text-xs sm:text-sm leading-tight">{borough}</div>
                                         <div className="text-xs opacity-80 text-center leading-tight">
                                             {stats.count} stations
+                                        </div>
+                                        <div className="text-xs opacity-80 text-center leading-tight hidden sm:block">
+                                            {stats.trips.toLocaleString()} trips
                                         </div>
                                     </button>
                                 );
@@ -254,25 +257,25 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Station List */}
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 overflow-y-auto">
                     <div className="space-y-4">
                         {Array.from(filteredGroupedStations.entries()).map(([borough, stationList]) => (
                             <div key={borough} className="space-y-2">
                                 {/* Borough Header */}
-                                <div className={`p-3 rounded-lg border ${getBoroughColor(borough)}`}>
+                                <div className={`p-2 sm:p-3 rounded-lg border ${getBoroughColor(borough)}`}>
                                     <div className="flex items-center justify-between text-white">
                                         <div className="flex items-center gap-2">
-                                            <Building2 className="w-4 h-4" />
-                                            <span className="font-medium text-sm text-white">{borough}</span>
+                                            <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                            <span className="font-medium text-xs sm:text-sm text-white">{borough}</span>
                                         </div>
-                                        <div className="text-xs opacity-80">
+                                        <div className="text-xs sm:text-sm opacity-80">
                                             {stationList.length} stations
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Stations in Borough */}
-                                <div className="space-y-1 ml-4">
+                                <div className="space-y-1 ml-2 sm:ml-4">
                                     {stationList.map((station) => {
                                         const stationIndex = getStationIndex(station);
                                         const isSelected = selectedStationIndices.has(stationIndex);
@@ -282,25 +285,25 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                             <button
                                                 key={`${station.id}-${stationIndex}`}
                                                 onClick={() => onStationToggle(stationIndex)}
-                                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 flex items-start gap-3 ${
+                                                className={`w-full text-left p-2 sm:p-3 rounded-lg border transition-all duration-200 flex items-start gap-2 sm:gap-3 ${
                                                     isSelected
                                                         ? `${getBoroughColor(station.borough || borough)} text-white`
                                                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
                                                 }`}
                                             >
-                                                <div className="flex-shrink-0 mt-0.5">
+                                                <div className="flex-shrink-0 mt-0.5 sm:mt-1">
                                                     {isSelected ? (
-                                                        <CheckSquare className="w-5 h-5 text-white" />
+                                                        <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                                     ) : (
-                                                        <Square className="w-5 h-5 text-white" />
+                                                        <Square className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                                     )}
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-sm truncate">
+                                                    <div className="font-medium text-xs sm:text-sm truncate">
                                                         {station.name}
                                                     </div>
-                                                    <div className="text-xs text-white/60 mt-1">
+                                                    <div className="text-xs text-white/60 mt-0.5 sm:mt-1">
                                                         {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
                                                     </div>
                                                 </div>
@@ -326,7 +329,7 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="mt-3 pt-3 border-t border-white/10 flex justify-end sticky bottom-0 bg-black/80 backdrop-blur-md">
+                <div className="mt-3 pt-3 border-t border-white/10 flex justify-end">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors flex items-center gap-2"
