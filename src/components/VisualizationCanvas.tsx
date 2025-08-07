@@ -321,20 +321,20 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // 0 = full dark tiles, 1 = full light tiles
     let lightOpacity = 0;
 
-    if (timeDecimal >= 5 && timeDecimal <= 20) {
-      // Extended daytime period (5 AM to 8 PM)
+    if (timeDecimal >= 3 && timeDecimal <= 21) {
+      // Extended daytime period (3 AM to 9 PM)
       if (timeDecimal <= 8) {
-        // Gradual sunrise transition (5-8 AM) - 3 hours
-        lightOpacity = (timeDecimal - 5) / 3; // 0 to 1 over 3 hours
-      } else if (timeDecimal <= 17) {
-        // Full daylight (8 AM - 5 PM)
+        // Very gradual sunrise transition (3-8 AM) - 5 hours
+        lightOpacity = (timeDecimal - 3) / 5; // 0 to 1 over 5 hours
+      } else if (timeDecimal <= 16) {
+        // Full daylight (8 AM - 4 PM)
         lightOpacity = 1;
       } else {
-        // Gradual sunset transition (5-8 PM) - 3 hours
-        lightOpacity = 1 - ((timeDecimal - 17) / 3); // 1 to 0 over 3 hours
+        // Very gradual sunset transition (4-9 PM) - 5 hours
+        lightOpacity = 1 - ((timeDecimal - 16) / 5); // 1 to 0 over 5 hours
       }
     }
-    // Night time (8 PM - 5 AM): lightOpacity remains 0
+    // Night time (9 PM - 3 AM): lightOpacity remains 0
 
     // Apply smooth easing for more natural transitions
     lightOpacity = easeInOutCubic(lightOpacity);
@@ -399,8 +399,15 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   // Toggle map visibility
   useEffect(() => {
     if (containerRef.current) {
+      // Set transition property
       containerRef.current.style.transition = 'opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1)';
-      containerRef.current.style.opacity = showMap ? '1' : '0';
+      
+      // Use requestAnimationFrame to ensure transition applies
+      requestAnimationFrame(() => {
+        if (containerRef.current) {
+          containerRef.current.style.opacity = showMap ? '1' : '0';
+        }
+      });
     }
   }, [showMap]);
 
