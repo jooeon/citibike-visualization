@@ -251,15 +251,19 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                 const selectedCount = selectionState?.count || 0;
                                 const stats = boroughStats.get(borough) || { count: 0, trips: 0 };
                                 const isStatenIsland = borough === 'Staten Island';
-                                const isDisabled = isStatenIsland && stats.count === 0;
+                                const isDisabled = stats.count === 0 || stats.trips === 0;
                                 const hasStations = stats.count > 0;
+                                const hasTrips = stats.trips > 0;
 
                                 return (
                                     <button
                                         key={borough}
-                                        onClick={() => hasStations && handleBoroughToggle(borough)}
+                                        onClick={() => hasStations && hasTrips && handleBoroughToggle(borough)}
                                         disabled={isDisabled}
-                                        title={isDisabled ? 'No Staten Island stations available in current dataset' : undefined}
+                                        title={isDisabled ? 
+                                            (stats.count === 0 ? `No ${borough} stations available in current dataset` : 
+                                             `No trips available from ${borough} stations in current dataset`) : 
+                                            undefined}
                                         className={`px-2 py-1.5 rounded-md border transition-all duration-200 min-w-0 flex-shrink-0 relative group cursor-pointer ${
                                             isDisabled
                                                 ? 'bg-gray-800/20 border-gray-600/20 text-gray-500 cursor-not-allowed opacity-50'
@@ -278,10 +282,12 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                             {stats.trips.toLocaleString()} trips
                                         </div>
                                         
-                                        {/* Tooltip for disabled Staten Island */}
+                                        {/* Tooltip for disabled boroughs */}
                                         {isDisabled && (
                                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 border border-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10 shadow-lg">
-                                                No Staten Island stations available in current dataset
+                                                {stats.count === 0 ? 
+                                                    `No ${borough} stations available in current dataset` : 
+                                                    `No trips available from ${borough} stations in current dataset`}
                                             </div>
                                         )}
                                     </button>
