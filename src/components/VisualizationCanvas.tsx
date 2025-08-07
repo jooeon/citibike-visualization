@@ -242,10 +242,9 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           // Update date display when day changes
           if (onDateUpdate && allTripsRef.current.length > 0) {
             const dayName = currentSimTime.toLocaleDateString('en-US', { weekday: 'short' });
-            const dayName = firstTripDate.toLocaleDateString('en-US', { weekday: 'short' });
-            const month = String(firstTripDate.getMonth() + 1).padStart(2, '0');
-            const day = String(firstTripDate.getDate()).padStart(2, '0');
-            const year = firstTripDate.getFullYear();
+            const month = String(currentSimTime.getMonth() + 1).padStart(2, '0');
+            const day = String(currentSimTime.getDate()).padStart(2, '0');
+            const year = currentSimTime.getFullYear();
             const dateStr = `${dayName} ${month}/${day}/${year}`;
             onDateUpdate(dateStr);
           }
