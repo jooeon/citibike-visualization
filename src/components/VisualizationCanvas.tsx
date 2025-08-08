@@ -218,7 +218,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
     } catch (error) {
       console.error('Failed to load chronological data:', error);
-      // Clear loading state on error too
+    } finally {
+      // Always clear loading state when done, whether success or error
       if (onLoadingStateChange) {
         onLoadingStateChange(false);
       }
