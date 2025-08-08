@@ -326,32 +326,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             })}
                         </div>
                         
-                        {/* Search Input - Hidden on mobile */}
-                        <div className="hidden sm:block mb-2">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Search className="w-4 h-4 text-white/60" />
-                                <h3 className="text-white/80 text-sm font-medium">Search Stations</h3>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Search by station name..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full px-3 py-2 pl-9 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all text-sm"
-                                />
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
-                                {searchTerm && (
-                                    <button
-                                        onClick={() => setSearchTerm('')}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                        
                         <div className="flex gap-2">
                             {searchTerm.trim() && (
                                 <>
@@ -381,6 +355,32 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                             >
                                 Deselect All
                             </button>
+                        </div>
+                        
+                        {/* Search Input - Hidden on mobile */}
+                        <div className="hidden sm:block mt-3">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Search className="w-4 h-4 text-white/60" />
+                                <h3 className="text-white/80 text-sm font-medium">Search Stations</h3>
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search by station name..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full px-3 py-2 pl-9 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all text-sm"
+                                />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+                                {searchTerm && (
+                                    <button
+                                        onClick={() => setSearchTerm('')}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
