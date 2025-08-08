@@ -20,6 +20,7 @@ interface VisualizationCanvasProps {
   showMap: boolean;
   selectedStationIndices: Set<number>;
   onTimeJump?: (hours: number) => void;
+  onEndOfDataReached?: (reached: boolean) => void;
 }
 
 const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
@@ -36,7 +37,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onAllTripsUpdate,
   showMap,
   selectedStationIndices,
-  onTimeJump
+  onTimeJump,
+  onEndOfDataReached
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -269,6 +271,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         if (rendererRef.current) {
           const { currentSimTime, tripsStarted } = rendererRef.current.updateSimulation(animationState.speed);
 
+          // Check if we've reached end of data and update parent
+          const stats = rendererRef.current.getStats();
+          if (onEndOfDataReached && stats.hasReachedEndOfData) {
+            onEndOfDataReached(true);
+            // Also pause the animation state
+            setAnimationState(prev => ({ ...prev, isPlaying: false }));
+          }
+
           // Update current simulation time for day/night overlay
           setCurrentSimulationTime(currentSimTime);
 
@@ -318,7 +328,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         clearInterval(updateIntervalRef.current);
       }
     };
-  }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate]);
+  }, [animationState.isPlaying, animationState.speed, onTimeUpdate, onTripCountUpdate, onEndOfDataReached]);
 
   // Function to update map tile opacity based on time of day
   const updateMapTileOpacity = useCallback((currentTime: Date) => {
@@ -373,6 +383,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     if (animationState.tripCounter === 0 && !animationState.isPlaying && rendererRef.current) {
       rendererRef.current.reset();
       
+      // Reset end of data flag when resetting
+      if (onEndOfDataReached) {
+        onEndOfDataReached(false);
+      }
+      
       // Reset time display to first trip time
       if (allTripsRef.current.length > 0 && onTimeUpdate) {
         const firstTripTime = allTripsRef.current[0].startTime;
@@ -384,7 +399,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         onTimeUpdate(timeStr);
       }
     }
-  }, [animationState.tripCounter, animationState.isPlaying, onTimeUpdate]);
+  }, [animationState.tripCounter, animationState.isPlaying, onTimeUpdate, onEndOfDataReached]);
 
   // Handle time jumps
   useEffect(() => {
@@ -427,6 +442,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       // Update map tile opacity
       updateMapTileOpacity(currentSimTime);
+      
+      // Reset end of data flag when jumping backward
+      if (hours < 0 && onEndOfDataReached) {
+        onEndOfDataReached(false);
+      }
     };
 
     // Store the function reference so we can call it
@@ -439,7 +459,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       delete (window as any).handleTimeJump;
       delete (window as any).rendererRef;
     };
-  }, [onTimeJump, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity]);
+  }, [onTimeJump, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity, onEndOfDataReached]);
   
   // Animation loop for rendering
   useEffect(() => {
