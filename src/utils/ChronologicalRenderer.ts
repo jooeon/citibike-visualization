@@ -115,7 +115,7 @@ export class ChronologicalRenderer {
   private timeScale: number = 500; // 500x speed (1 real second = 500 simulation seconds) - reduced by 50%
   private readonly MAX_DISPLAYED_TRIPS = 100; // Hard cap on displayed trips
   private totalTripsStarted: number = 0; // Monotonically increasing counter
-  private simulationTime: number = 0; // Current simulation time in milliseconds since first trip
+  private _simulationTime: number = 0; // Current simulation time in milliseconds since first trip
   private isRunning: boolean = false;
   private lastUpdateTime: number = 0;
   private animationTime: number = 0; // Separate time tracking for animations
@@ -124,7 +124,7 @@ export class ChronologicalRenderer {
   
   // Expose simulationTime for external access
   get simulationTime(): number {
-    return this.simulationTime;
+    return this._simulationTime;
   }
 
   // Cached station trip counts for performance
@@ -190,7 +190,7 @@ export class ChronologicalRenderer {
 
     // Store current running state
     const wasRunning = this.isRunning;
-    const simulationTimeBeforeFilter = this.simulationTime;
+    const simulationTimeBeforeFilter = this._simulationTime;
     const animationTimeBeforeFilter = this.animationTime;
     
     this.selectedStationIndices = indices;
@@ -368,7 +368,7 @@ export class ChronologicalRenderer {
     this.currentTripIndex = 0;
     this.activeTrips = [];
     this.completedPaths = [];
-    this.simulationTime = 0;
+    this._simulationTime = 0;
     this.totalTripsStarted = 0;
     this.isRunning = false;
     this.animationTime = 0;
@@ -383,7 +383,7 @@ export class ChronologicalRenderer {
       this.currentTripIndex = 0;
       this.activeTrips = [];
       this.completedPaths = [];
-      this.simulationTime = 0;
+      this._simulationTime = 0;
       this.totalTripsStarted = 0;
       this.animationTime = 0;
       this.animationStartTime = Date.now();
@@ -409,18 +409,18 @@ export class ChronologicalRenderer {
     if (this.isRunning) {
       const now = Date.now();
       const realTimeElapsed = now - this.lastUpdateTime;
-      this.simulationTime += realTimeElapsed * this.timeScale * speed;
+      this._simulationTime += realTimeElapsed * this.timeScale * speed;
       this.lastUpdateTime = now;
       
       // Debug simulation time updates
       if (realTimeElapsed > 200) { // Only log significant time jumps
-        // console.log('SIMULATION: Large time jump detected:', realTimeElapsed, 'ms, new sim time:', this.simulationTime);
+        // console.log('SIMULATION: Large time jump detected:', realTimeElapsed, 'ms, new sim time:', this._simulationTime);
       }
     }
 
     // Calculate current simulation time
     const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
-    const currentSimTime = new Date(firstTripTime + this.simulationTime);
+    const currentSimTime = new Date(firstTripTime + this._simulationTime);
 
     // Start new trips that should have started by now (only if running)
     let tripsStarted = 0;
@@ -783,7 +783,7 @@ export class ChronologicalRenderer {
     if (this.filteredTrips.length === 0) return;
     
     const hoursInMs = hours * 60 * 60 * 1000;
-    this.simulationTime += hoursInMs;
+    this._simulationTime += hoursInMs;
     this.animationTime += hoursInMs;
     
     // CRITICAL: Clear all active trips and completed paths to prevent streaking
@@ -799,7 +799,7 @@ export class ChronologicalRenderer {
     
     // Adjust currentTripIndex to match the new time
     const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
-    const currentSimTime = firstTripTime + this.simulationTime;
+    const currentSimTime = firstTripTime + this._simulationTime;
     
     let newTripIndex = 0;
     for (let i = 0; i < this.filteredTrips.length; i++) {

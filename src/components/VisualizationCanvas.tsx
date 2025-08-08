@@ -146,6 +146,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
       if (mapRef.current) {
         mapRef.current.remove();
+        mapRef.current = null;
       }
     };
   }, []);
