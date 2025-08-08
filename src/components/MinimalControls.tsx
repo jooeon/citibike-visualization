@@ -38,8 +38,10 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
           <button
             onClick={onPlayPause}
             disabled={isLoading}
-            className={`flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50 ${
-              isInitialState ? 'animate-pulse-slow' : ''
+            className={`flex items-center justify-center border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50 ${
+              isInitialState 
+                ? 'bg-white/10 animate-pulse hover:bg-white/20' 
+                : 'bg-white/10 hover:bg-white/20'
             }`}
           >
             {animationState.isPlaying ? (
@@ -111,19 +113,6 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
       </div>
 
       <style jsx>{`
-        @keyframes pulse-slow {
-          0%, 100% {
-            background-color: rgba(255, 255, 255, 0.1);
-          }
-          50% {
-            background-color: rgba(128, 128, 128, 0.2);
-          }
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 2s ease-in-out infinite;
-        }
-        
         .slider::-webkit-slider-thumb {
           appearance: none;
           height: 12px;
