@@ -146,6 +146,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       }
       if (mapRef.current) {
         mapRef.current.remove();
+        mapRef.current = null;
       }
     };
   }, []);
@@ -215,8 +216,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       console.log(`Loaded ${trips.length} chronological trips`);
       
-      // Longer delay to ensure all state updates and UI updates are processed
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait longer to ensure all trips are fully processed and UI is ready
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
     } catch (error) {
       console.error('Failed to load chronological data:', error);
@@ -431,8 +432,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // Store the function reference so we can call it
     (window as any).handleTimeJump = handleTimeJumpInternal;
     
+    // Also expose renderer reference for accurate time tracking
+    (window as any).rendererRef = { current: rendererRef.current };
+    
     return () => {
       delete (window as any).handleTimeJump;
+      delete (window as any).rendererRef;
     };
   }, [onTimeJump, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity]);
   
