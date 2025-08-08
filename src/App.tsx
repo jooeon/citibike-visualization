@@ -184,13 +184,21 @@ function App() {
     const targetDate = new Date(dateStr + 'T00:00:00'); // Set to 12:00 AM of selected date
     const targetTimestamp = targetDate.getTime();
     
-    // Calculate time difference from current simulation time to target date at 12:00 AM
-    const currentSimTime = getCurrentSimulationTime();
-    const timeDiff = targetTimestamp - currentSimTime;
+    // Calculate time difference from the first trip time (simulation baseline) to target date at 12:00 AM
+    if (allTrips.length === 0) return;
+    
+    const firstTripTime = allTrips[0].startTimestamp * 1000; // Simulation baseline
+    const timeDiff = targetTimestamp - firstTripTime;
     const hoursDiff = timeDiff / (1000 * 60 * 60);
     
-    // Jump to 12:00 AM of the selected date
-    handleTimeJump(hoursDiff);
+    // Calculate how much time to jump from current position
+    const currentSimTime = getCurrentSimulationTime();
+    const currentOffsetFromBaseline = currentSimTime - firstTripTime;
+    const targetOffsetFromBaseline = timeDiff;
+    const jumpHours = (targetOffsetFromBaseline - currentOffsetFromBaseline) / (1000 * 60 * 60);
+    
+    // Jump to exactly 12:00 AM of the selected date
+    handleTimeJump(jumpHours);
     
     setShowDateSelector(false);
   }, [allTrips, getCurrentSimulationTime, handleTimeJump]);
