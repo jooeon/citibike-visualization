@@ -106,6 +106,19 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
       </div>
 
       <style jsx>{`
+        @keyframes pulse-subtle {
+          0%, 100% {
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+          50% {
+            background-color: rgba(255, 255, 255, 0.05);
+          }
+        }
+        
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s ease-in-out infinite;
+        }
+        
         .slider::-webkit-slider-thumb {
           appearance: none;
           height: 12px;

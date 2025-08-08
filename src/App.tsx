@@ -238,6 +238,7 @@ function App() {
         onToggleStationSelector={handleToggleStationSelector}
         selectedStationCount={selectedStationIndices.size}
         totalStationCount={stations.length}
+        hasStartedAnimation={animationState.tripCounter > 0}
       />
 
       {/* Loading Indicator */}
