@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
@@ -23,6 +23,7 @@ function App() {
   const [showDateSelector, setShowDateSelector] = useState<boolean>(false);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [allTrips, setAllTrips] = useState<ProcessedTrip[]>([]);
+  const [hasReachedEndOfData, setHasReachedEndOfData] = useState<boolean>(false);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -32,7 +33,19 @@ function App() {
     totalTrips: 0
   });
 
+  // Auto-pause when reaching end of data
+  useEffect(() => {
+    if (hasReachedEndOfData && animationState.isPlaying) {
+      setAnimationState(prev => ({ ...prev, isPlaying: false }));
+    }
+  }, [hasReachedEndOfData, animationState.isPlaying]);
+
   const handlePlayPause = () => {
+    // Don't allow play if we've reached the end of data
+    if (hasReachedEndOfData && !animationState.isPlaying) {
+      return;
+    }
+    
     setAnimationState(prev => ({
       ...prev,
       isPlaying: !prev.isPlaying
@@ -40,6 +53,9 @@ function App() {
   };
 
   const handleReset = () => {
+    // Reset end of data flag when resetting
+    setHasReachedEndOfData(false);
+    
     setAnimationState(prev => ({
       ...prev,
       tripCounter: 0,
@@ -175,6 +191,11 @@ function App() {
     // Use the global function exposed by VisualizationCanvas
     if ((window as any).handleTimeJump) {
       (window as any).handleTimeJump(hours);
+      
+      // Reset end of data flag when jumping time (especially backward)
+      if (hours < 0) {
+        setHasReachedEndOfData(false);
+      }
     }
   }, []);
 
@@ -218,6 +239,7 @@ function App() {
         showMap={showMap}
         selectedStationIndices={selectedStationIndices}
         onTimeJump={handleTimeJump}
+        onEndOfDataReached={setHasReachedEndOfData}
       />
 
       {/* Digital Clock */}
@@ -243,6 +265,7 @@ function App() {
         onToggleStationSelector={handleToggleStationSelector}
         selectedStationCount={selectedStationIndices.size}
         totalStationCount={stations.length}
+        hasReachedEndOfData={hasReachedEndOfData}
       />
 
       {/* Loading Indicator */}

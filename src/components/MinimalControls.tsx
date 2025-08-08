@@ -13,6 +13,7 @@ interface MinimalControlsProps {
   onToggleStationSelector: () => void;
   selectedStationCount: number;
   totalStationCount: number;
+  hasReachedEndOfData: boolean;
 }
 
 const MinimalControls: React.FC<MinimalControlsProps> = ({
@@ -25,10 +26,12 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
   onToggleMap,
   onToggleStationSelector,
   selectedStationCount,
-  totalStationCount
+  totalStationCount,
+  hasReachedEndOfData
 }) => {
   // Check if this is the initial state (never been played and at beginning)
   const isInitialState = !animationState.isPlaying && animationState.tripCounter === 0;
+  const canPlay = !hasReachedEndOfData || animationState.isPlaying;
 
   return (
     <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000]">
@@ -37,10 +40,17 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
         <div className="flex gap-1.5 sm:gap-2">
           <button
             onClick={onPlayPause}
-            disabled={isLoading}
+            disabled={isLoading || (!canPlay && !animationState.isPlaying)}
+            title={
+              isLoading ? 'Loading...' :
+              hasReachedEndOfData && !animationState.isPlaying ? 'End of data reached - reset or rewind to continue' :
+              undefined
+            }
             className={`flex items-center justify-center border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50 ${
               isInitialState 
                 ? 'bg-white/10 animate-pulse hover:bg-white/25' 
+                : hasReachedEndOfData && !animationState.isPlaying
+                ? 'bg-red-600/20 border-red-500/30'
                 : 'bg-white/10 hover:bg-white/20'
             }`}
           >

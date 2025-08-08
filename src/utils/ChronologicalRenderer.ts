@@ -122,6 +122,9 @@ export class ChronologicalRenderer {
   private animationStartTime: number = 0; // When animation timing started
   private pausedAnimationTime: number = 0;
   
+  // Track end of data state
+  private hasReachedEndOfData: boolean = false;
+  
   // Expose simulationTime for external access
   get simulationTime(): number {
     return this._simulationTime;
@@ -378,6 +381,9 @@ export class ChronologicalRenderer {
   }
 
   startSimulation(): void {
+    // Reset end of data flag when starting
+    this.hasReachedEndOfData = false;
+    
     if (this.simulationTime === 0) {
       // True restart
       this.currentTripIndex = 0;
@@ -405,6 +411,20 @@ export class ChronologicalRenderer {
       return { currentSimTime: new Date(), tripsStarted: 0 };
     }
 
+    // Check if we've reached the end of available data
+    const lastTrip = this.filteredTrips[this.filteredTrips.length - 1];
+    const lastTripDate = new Date(lastTrip.startTimestamp * 1000);
+    const endOfDataTime = new Date(lastTripDate.getFullYear(), lastTripDate.getMonth(), lastTripDate.getDate(), 23, 59, 59);
+    const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
+    const currentSimTime = new Date(firstTripTime + this._simulationTime);
+    
+    // Auto-pause if we've reached the end of data
+    if (currentSimTime >= endOfDataTime && this.isRunning) {
+      this.isRunning = false;
+      this.hasReachedEndOfData = true;
+      console.log('Auto-paused: Reached end of trip data at', endOfDataTime.toLocaleString());
+    }
+
     // Only advance time if running
     if (this.isRunning) {
       const now = Date.now();
@@ -419,8 +439,7 @@ export class ChronologicalRenderer {
     }
 
     // Calculate current simulation time
-    const firstTripTime = this.filteredTrips[0].startTimestamp * 1000;
-    const currentSimTime = new Date(firstTripTime + this._simulationTime);
+    const updatedCurrentSimTime = new Date(firstTripTime + this._simulationTime);
 
     // Start new trips that should have started by now (only if running)
     let tripsStarted = 0;
@@ -430,7 +449,7 @@ export class ChronologicalRenderer {
         const trip = this.filteredTrips[this.currentTripIndex];
         const tripStartTime = trip.startTimestamp * 1000;
 
-        if (tripStartTime <= currentSimTime.getTime()) {
+        if (tripStartTime <= updatedCurrentSimTime.getTime()) {
           this.startTrip(trip);
           this.currentTripIndex++;
           this.totalTripsStarted++;
@@ -438,9 +457,9 @@ export class ChronologicalRenderer {
         } else {
           // Debug why trips aren't starting
           if (this.currentTripIndex < 5) { // Only log first few trips to avoid spam
-            // console.log('SIMULATION: Trip not ready yet. Trip time:', new Date(tripStartTime).toLocaleTimeString(), 
-            //            'Current sim time:', currentSimTime.toLocaleTimeString(), 
-            //            'Difference:', (tripStartTime - currentSimTime.getTime()) / 1000, 'seconds');
+            // console.log('SIMULATION: Trip not ready yet. Trip time:', new Date(tripStartTime).toLocaleTimeString(),
+            //            'Current sim time:', updatedCurrentSimTime.toLocaleTimeString(),
+            //            'Difference:', (tripStartTime - updatedCurrentSimTime.getTime()) / 1000, 'seconds');
           }
           break;
         }
@@ -454,7 +473,7 @@ export class ChronologicalRenderer {
       if (tripsStarted === 0 && this.currentTripIndex < this.filteredTrips.length && this.isRunning) {
         const nextTrip = this.filteredTrips[this.currentTripIndex];
         const nextTripTime = nextTrip.startTimestamp * 1000;
-        const timeDiff = (nextTripTime - currentSimTime.getTime()) / 1000;
+        const timeDiff = (nextTripTime - updatedCurrentSimTime.getTime()) / 1000;
         if (timeDiff < 60) { // If next trip is within 1 minute, log it
           // console.log('SIMULATION: Next trip in', timeDiff.toFixed(1), 'seconds at', new Date(nextTripTime).toLocaleTimeString());
         }
@@ -464,7 +483,7 @@ export class ChronologicalRenderer {
     // Update active trips (always, even when paused, for visual smoothness)
     this.updateActiveTrips();
 
-    return { currentSimTime, tripsStarted };
+    return { currentSimTime: updatedCurrentSimTime, tripsStarted };
   }
 
   updateSimulationTimeOffset(speed: number): void {
@@ -739,6 +758,7 @@ export class ChronologicalRenderer {
     this.animationTime = 0;
     this.animationStartTime = 0;
     this.lastUpdateTime = 0;
+    this.hasReachedEndOfData = false;
   }
 
   getStats() {
@@ -757,7 +777,8 @@ export class ChronologicalRenderer {
       totalAvailableTrips: this.filteredTrips.length,
       selectedStations: this.selectedStationIndices.size,
       totalStations: this.stations.length,
-      filteredTrips: this.filteredTrips
+      filteredTrips: this.filteredTrips,
+      hasReachedEndOfData: this.hasReachedEndOfData
     };
   }
 
@@ -781,6 +802,9 @@ export class ChronologicalRenderer {
 
   jumpTime(hours: number): void {
     if (this.filteredTrips.length === 0) return;
+    
+    // Reset end of data flag when jumping time (especially backward)
+    this.hasReachedEndOfData = false;
     
     const hoursInMs = hours * 60 * 60 * 1000;
     this._simulationTime += hoursInMs;
