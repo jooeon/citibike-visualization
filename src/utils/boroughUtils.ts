@@ -419,7 +419,7 @@ export function getBoroughFromCoordinates(lat: number, lng: number, stationName?
     }
   }
 
-  console.log(`Fallback assignment for coordinates (${lat}, ${lng})${stationName ? ` "${stationName}"` : ''}: ${closestBorough}`);
+  // console.log(`Fallback assignment for coordinates (${lat}, ${lng})${stationName ? ` "${stationName}"` : ''}: ${closestBorough}`);
   return closestBorough;
 }
 
