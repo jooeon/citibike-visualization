@@ -169,11 +169,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
         onAllTripsUpdate(trips);
       }
       
-      // Set loading state after data is loaded but before processing
-      if (onLoadingStateChange) {
-        onLoadingStateChange(true);
-      }
-      
       // Initialize renderer with both trips and stations (this will precompute trip counts)
       console.log('Initializing renderer and precomputing station trip counts...');
       rendererRef.current.initializeWithData(trips, stations);
