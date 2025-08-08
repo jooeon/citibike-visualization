@@ -4,7 +4,7 @@ import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
 import LoadingIndicator from './components/LoadingIndicator';
 import DigitalClock from './components/DigitalClock';
-import DatePeriodSelector from './components/DatePeriodSelector';
+import DateSelector from './components/DateSelector';
 import InfoButton from './components/InfoButton';
 import type { AnimationState, Station, ProcessedTrip } from './types';
 
@@ -23,8 +23,6 @@ function App() {
   const [showDateSelector, setShowDateSelector] = useState<boolean>(false);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [allTrips, setAllTrips] = useState<ProcessedTrip[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('all_day');
-  const [availablePeriods] = useState<string[]>(['all_day', 'weekday_morning', 'weekend_evening']);
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -197,19 +195,6 @@ function App() {
     setShowDateSelector(false);
   }, [allTrips, getCurrentSimulationTime, handleTimeJump]);
 
-  const handlePeriodChange = useCallback((period: string) => {
-    setSelectedPeriod(period);
-  }, []);
-
-  // Convert currentDate from "Wed 05/14/2025" format to "YYYY-MM-DD" format
-  const getCurrentDateForSelector = useCallback(() => {
-    const datePart = currentDate.split(' ')[1]; // Extract "05/14/2025"
-    if (!datePart) return new Date().toISOString().split('T')[0];
-    
-    const [month, day, year] = datePart.split('/');
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }, [currentDate]);
-
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
       {/* Main Visualization Canvas */}
@@ -279,14 +264,11 @@ function App() {
 
       {/* Date Selector Modal */}
       {showDateSelector && (
-        <DatePeriodSelector
-          selectedDate={getCurrentDateForSelector()}
+        <DateSelector
+          currentDate={currentDate.split(' ')[1] || currentDate} // Extract date part from "Wed 05/14/2025"
           availableDates={availableDates}
           onDateSelect={handleDateSelect}
           onClose={() => setShowDateSelector(false)}
-          selectedPeriod={selectedPeriod}
-          availablePeriods={availablePeriods}
-          onPeriodChange={handlePeriodChange}
         />
       )}
 
