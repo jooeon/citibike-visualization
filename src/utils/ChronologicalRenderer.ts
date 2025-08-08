@@ -733,7 +733,7 @@ export class ChronologicalRenderer {
     this.currentTripIndex = 0;
     this.activeTrips = [];
     this.completedPaths = [];
-    this.simulationTime = 0;
+    this._simulationTime = 0;
     this.totalTripsStarted = 0;
     this.isRunning = false;
     this.animationTime = 0;
