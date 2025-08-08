@@ -237,6 +237,37 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                 {/* Stats and Controls */}
                 <div className="space-y-3 mb-3">
+                    <div className="flex gap-2">
+                        {searchTerm.trim() && (
+                            <>
+                                <button
+                                    onClick={handleSelectAllVisible}
+                                    className="hidden sm:block px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                                >
+                                    Select All Visible
+                                </button>
+                                <button
+                                    onClick={handleSelectNoneVisible}
+                                    className="hidden sm:block px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                                >
+                                    Deselect All Visible
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={onSelectAll}
+                            className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                        >
+                            Select All
+                        </button>
+                        <button
+                            onClick={onSelectNone}
+                            className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
+                        >
+                            Deselect All
+                        </button>
+                    </div>
+                    
                     {/* Borough Filter */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -497,37 +528,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                             {station.name}
                                                         </div>
                                                         <div className="text-xs text-white/60 mt-0.5 sm:mt-1">
-                                                            {getStationTripCount(getStationIndex(station)).toLocaleString()} trips
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        )})}
-                    </div>
-
-                    {searchTerm.trim() && visibleStations.length === 0 && (
-                        <div className="text-center py-8 text-white/60">
-                            <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                            <p>
-                                No stations found matching "{searchTerm}"
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="mt-3 pt-3 border-t border-white/10 flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 bg-blue-600/30 hover:bg-blue-600/40 border border-blue-500/40 rounded-lg text-white transition-colors flex items-center gap-2"
-                    >
-                        <Filter className="w-4 h-4" />
-                        Apply Filter
-                    </button>
                 </div>
             </div>
         </div>
