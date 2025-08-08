@@ -23,7 +23,6 @@ function App() {
   const [showDateSelector, setShowDateSelector] = useState<boolean>(false);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [allTrips, setAllTrips] = useState<ProcessedTrip[]>([]);
-  const [currentSimulationTime, setCurrentSimulationTime] = useState<number>(0); // Track actual simulation time
   
   const [animationState, setAnimationState] = useState<AnimationState>({
     isPlaying: false,
@@ -139,8 +138,19 @@ function App() {
   }, []);
 
   const getCurrentSimulationTime = useCallback((): number => {
-    return currentSimulationTime;
-  }, [currentSimulationTime]);
+    if (allTrips.length === 0) return Date.now();
+    
+    // Get the first trip time as baseline
+    const firstTripTime = allTrips[0].startTimestamp * 1000;
+    
+    // Add current simulation offset (this would need to be tracked from the renderer)
+    // For now, we'll estimate based on trip counter and total trips
+    const progress = animationState.totalTrips > 0 ? animationState.tripCounter / animationState.totalTrips : 0;
+    const lastTripTime = allTrips[allTrips.length - 1].startTimestamp * 1000;
+    const estimatedCurrentTime = firstTripTime + (lastTripTime - firstTripTime) * progress;
+    
+    return estimatedCurrentTime;
+  }, [allTrips, animationState.tripCounter, animationState.totalTrips]);
 
   const canJumpToTime = useCallback((hours: number): boolean => {
     if (allTrips.length === 0) return false;
