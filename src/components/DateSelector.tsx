@@ -157,7 +157,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
                 `}
                 title={
                   !isCurrentMonth ? undefined :
-                  !hasTrips ? 'No trips available for this date' :
+                  !hasTrips ? 'No trips available for this date in current dataset' :
                   isSelected ? 'Currently selected date' :
                   isToday ? 'Today' :
                   undefined
