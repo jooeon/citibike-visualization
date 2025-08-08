@@ -431,8 +431,12 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     // Store the function reference so we can call it
     (window as any).handleTimeJump = handleTimeJumpInternal;
     
+    // Also expose renderer reference for accurate time tracking
+    (window as any).rendererRef = { current: rendererRef.current };
+    
     return () => {
       delete (window as any).handleTimeJump;
+      delete (window as any).rendererRef;
     };
   }, [onTimeJump, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity]);
   

@@ -121,6 +121,11 @@ export class ChronologicalRenderer {
   private animationTime: number = 0; // Separate time tracking for animations
   private animationStartTime: number = 0; // When animation timing started
   private pausedAnimationTime: number = 0;
+  
+  // Expose simulationTime for external access
+  get simulationTime(): number {
+    return this.simulationTime;
+  }
 
   // Cached station trip counts for performance
   private stationTripCounts: Map<number, number> = new Map();

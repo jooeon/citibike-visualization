@@ -140,16 +140,19 @@ function App() {
   const getCurrentSimulationTime = useCallback((): number => {
     if (allTrips.length === 0) return Date.now();
     
-    // Get the first trip time as baseline
+    // Get the renderer's current simulation time directly
+    if ((window as any).rendererRef?.current) {
+      const stats = (window as any).rendererRef.current.getStats();
+      const firstTripTime = allTrips[0].startTimestamp * 1000;
+      // Use the renderer's internal simulation time for accuracy
+      return firstTripTime + ((window as any).rendererRef.current.simulationTime || 0);
+    }
+    
+    // Fallback: Get the first trip time as baseline
     const firstTripTime = allTrips[0].startTimestamp * 1000;
     
-    // Add current simulation offset (this would need to be tracked from the renderer)
-    // For now, we'll estimate based on trip counter and total trips
-    const progress = animationState.totalTrips > 0 ? animationState.tripCounter / animationState.totalTrips : 0;
-    const lastTripTime = allTrips[allTrips.length - 1].startTimestamp * 1000;
-    const estimatedCurrentTime = firstTripTime + (lastTripTime - firstTripTime) * progress;
-    
-    return estimatedCurrentTime;
+    // If no renderer access, just return first trip time (initial state)
+    return firstTripTime;
   }, [allTrips, animationState.tripCounter, animationState.totalTrips]);
 
   const canJumpToTime = useCallback((hours: number): boolean => {
