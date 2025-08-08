@@ -237,37 +237,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
 
                 {/* Stats and Controls */}
                 <div className="space-y-3 mb-3">
-                    <div className="flex gap-2">
-                        {searchTerm.trim() && (
-                            <>
-                                <button
-                                    onClick={handleSelectAllVisible}
-                                    className="hidden sm:block px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                                >
-                                    Select All Visible
-                                </button>
-                                <button
-                                    onClick={handleSelectNoneVisible}
-                                    className="hidden sm:block px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                                >
-                                    Deselect All Visible
-                                </button>
-                            </>
-                        )}
-                        <button
-                            onClick={onSelectAll}
-                            className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                        >
-                            Select All
-                        </button>
-                        <button
-                            onClick={onSelectNone}
-                            className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                        >
-                            Deselect All
-                        </button>
-                    </div>
-                    
                     {/* Borough Filter */}
                     <div>
                         <div className="flex items-center gap-2 mb-2">
