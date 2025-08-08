@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import VisualizationCanvas from './components/VisualizationCanvas';
 import MinimalControls from './components/MinimalControls';
 import StationSelector from './components/StationSelector';
@@ -32,6 +32,13 @@ function App() {
     tripCounter: 0,
     totalTrips: 0
   });
+
+  // Auto-pause when reaching end of data
+  useEffect(() => {
+    if (hasReachedEndOfData && animationState.isPlaying) {
+      setAnimationState(prev => ({ ...prev, isPlaying: false }));
+    }
+  }, [hasReachedEndOfData, animationState.isPlaying]);
 
   const handlePlayPause = () => {
     // Don't allow play if we've reached the end of data
