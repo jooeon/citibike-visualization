@@ -528,6 +528,17 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                                                             {station.name}
                                                         </div>
                                                         <div className="text-xs text-white/60 mt-0.5 sm:mt-1">
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>
