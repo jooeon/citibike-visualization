@@ -275,8 +275,6 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
           const stats = rendererRef.current.getStats();
           if (onEndOfDataReached && stats.hasReachedEndOfData) {
             onEndOfDataReached(true);
-            // Also pause the animation state
-            setAnimationState(prev => ({ ...prev, isPlaying: false }));
           }
 
           // Update current simulation time for day/night overlay
