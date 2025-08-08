@@ -296,22 +296,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         </div>
                         
                         <div className="flex gap-2">
-                            {searchTerm.trim() && (
-                                <>
-                                    <button
-                                        onClick={handleSelectAllVisible}
-                                        className="hidden sm:block px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                                    >
-                                        Select All Visible
-                                    </button>
-                                    <button
-                                        onClick={handleSelectNoneVisible}
-                                        className="hidden sm:block px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
-                                    >
-                                        Deselect All Visible
-                                    </button>
-                                </>
-                            )}
                             <button
                                 onClick={onSelectAll}
                                 className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-white/80 hover:text-white transition-colors text-xs"
@@ -358,7 +342,6 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                 <div className="flex items-center justify-between text-xs text-white/60 mb-3">
                     <span className="text-xs sm:text-sm">
                         {selectedCount} of {stations.length} selected
-                        {searchTerm.trim() && ` • ${visibleStations.length} visible`}
                     </span>
                     <div className="flex gap-2 items-center">
                         {/* Desktop-only sorting */}
