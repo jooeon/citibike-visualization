@@ -211,13 +211,17 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       console.log(`Loaded ${trips.length} chronological trips`);
       
-      // Longer delay to ensure all state updates and UI updates are processed
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for all initialization to complete and console logs to be printed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Clear loading state only after everything is completely ready
+      if (onLoadingStateChange) {
+        onLoadingStateChange(false);
+      }
       
     } catch (error) {
       console.error('Failed to load chronological data:', error);
-    } finally {
-      // Clear loading state
+      // Clear loading state on error too
       if (onLoadingStateChange) {
         onLoadingStateChange(false);
       }
