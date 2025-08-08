@@ -16,6 +16,7 @@ interface VisualizationCanvasProps {
   onLoadingStateChange?: (isLoading: boolean) => void;
   onFilteredTripsUpdate?: (trips: ProcessedTrip[]) => void;
   onStationTripCountsUpdate?: (counts: Map<number, number>) => void;
+  onAllTripsUpdate?: (trips: ProcessedTrip[]) => void;
   showMap: boolean;
   selectedStationIndices: Set<number>;
   onTimeJump?: (hours: number) => void;
@@ -32,6 +33,7 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
   onLoadingStateChange,
   onFilteredTripsUpdate,
   onStationTripCountsUpdate,
+  onAllTripsUpdate,
   showMap,
   selectedStationIndices,
   onTimeJump
@@ -160,6 +162,11 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       // Load trip data
       const trips = await dataLoaderRef.current.loadAllData();
       allTripsRef.current = trips;
+      
+      // Update parent with all trips for date validation
+      if (onAllTripsUpdate) {
+        onAllTripsUpdate(trips);
+      }
       
       // Set loading state after data is loaded but before processing
       if (onLoadingStateChange) {
@@ -427,8 +434,8 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
     return () => {
       delete (window as any).handleTimeJump;
     };
-  }
-  )
+  }, [onTimeJump, animationState.speed, onTimeUpdate, onDateUpdate, onTripCountUpdate, updateMapTileOpacity]);
+  
   // Animation loop for rendering
   useEffect(() => {
     if (!rendererRef.current) return;

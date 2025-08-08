@@ -27,6 +27,9 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
   selectedStationCount,
   totalStationCount
 }) => {
+  // Check if this is the initial state (never been played and at beginning)
+  const isInitialState = !animationState.isPlaying && animationState.tripCounter === 0;
+
   return (
     <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000]">
       <div className="bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg p-2 sm:p-3 space-y-2 sm:space-y-3">
@@ -35,7 +38,11 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
           <button
             onClick={onPlayPause}
             disabled={isLoading}
-            className="flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50"
+            className={`flex items-center justify-center border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50 ${
+              isInitialState 
+                ? 'bg-white/10 animate-pulse hover:bg-white/25' 
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
           >
             {animationState.isPlaying ? (
               <Pause className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -106,6 +113,19 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
       </div>
 
       <style jsx>{`
+        .animate-pulse {
+          animation: pulse-light 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse-light {
+          0%, 100% {
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+          50% {
+            background-color: rgba(255, 255, 255, 0.25);
+          }
+        }
+        
         .slider::-webkit-slider-thumb {
           appearance: none;
           height: 12px;
