@@ -164,14 +164,14 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       const trips = await dataLoaderRef.current.loadAllData();
       allTripsRef.current = trips;
       
-      // Clear loading state immediately after loadAllData() completes
-      if (onLoadingStateChange) {
-        onLoadingStateChange(false);
-      }
-      
       // Update parent with all trips for date validation
       if (onAllTripsUpdate) {
         onAllTripsUpdate(trips);
+      }
+      
+      // Set loading state after data is loaded but before processing
+      if (onLoadingStateChange) {
+        onLoadingStateChange(true);
       }
       
       // Initialize renderer with both trips and stations (this will precompute trip counts)
@@ -216,10 +216,13 @@ const VisualizationCanvas: React.FC<VisualizationCanvasProps> = ({
       
       console.log(`Loaded ${trips.length} chronological trips`);
       
+      // Longer delay to ensure all state updates and UI updates are processed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
     } catch (error) {
       console.error('Failed to load chronological data:', error);
     } finally {
-      // Always clear loading state when done, whether success or error
+      // Clear loading state
       if (onLoadingStateChange) {
         onLoadingStateChange(false);
       }

@@ -60,10 +60,8 @@ export class ChronologicalDataLoader {
     console.log('Starting to load chronological trip data...');
 
     try {
-      // Load stations data first (but don't clear loading state yet)
-      if (this.stations.length === 0) {
-        await this.loadStations();
-      }
+      // Load stations data first
+      await this.loadStations();
 
       // Get list of available JSON files
       const fileNames = await this.getAvailableFiles();
