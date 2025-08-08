@@ -40,7 +40,7 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
             disabled={isLoading}
             className={`flex items-center justify-center border border-white/20 rounded px-2 py-1.5 sm:px-3 sm:py-2 text-white transition-colors disabled:opacity-50 ${
               isInitialState 
-                ? 'bg-white/10 animate-pulse hover:bg-white/20' 
+                ? 'bg-white/10 animate-pulse hover:bg-white/25' 
                 : 'bg-white/10 hover:bg-white/20'
             }`}
           >
@@ -113,6 +113,19 @@ const MinimalControls: React.FC<MinimalControlsProps> = ({
       </div>
 
       <style jsx>{`
+        .animate-pulse {
+          animation: pulse-light 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse-light {
+          0%, 100% {
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+          50% {
+            background-color: rgba(255, 255, 255, 0.25);
+          }
+        }
+        
         .slider::-webkit-slider-thumb {
           appearance: none;
           height: 12px;
