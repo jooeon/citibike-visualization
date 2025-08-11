@@ -493,6 +493,16 @@ const StationSelector: React.FC<StationSelectorProps> = ({
                         })}
                     </div>
                 </div>
+
+                {/* Footer with Done button */}
+                <div className="flex justify-end pt-3 border-t border-white/10">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-gray-600/60 hover:bg-gray-600/80 border border-gray-500/40 rounded-lg text-white font-medium transition-colors text-sm"
+                    >
+                        Done
+                    </button>
+                </div>
             </div>
         </div>
     );
